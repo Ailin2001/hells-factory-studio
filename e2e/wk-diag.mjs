@@ -17,21 +17,14 @@ const server = http.createServer((req, res) => {
 const base = `http://localhost:${server.address().port}/index.html`;
 const F = list => list.map(f => ({ name: path.basename(f), mimeType: f.endsWith('.mp4') ? 'video/mp4' : 'application/octet-stream', buffer: fs.readFileSync(f) }));
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-const VARIANTS = {
-  asis: '',
-  noEpb: '.epb{content-visibility:visible!important}',
-  noRow: '.row{content-visibility:visible!important}',
-  none: '.epb,.row{content-visibility:visible!important}',
-  noStrict: '.list{contain:none!important}',
-  noStrictNoEpb: '.list{contain:none!important}.epb{content-visibility:visible!important}'
-};
+const VARIANTS = { asis: '', none: '.epb{content-visibility:visible!important}' };
 const browser = await pw[engine].launch(process.env.PW_EXE ? { executablePath: process.env.PW_EXE, args: ['--no-sandbox', '--autoplay-policy=no-user-gesture-required'] } : {});
 const summary = [];
 for (const [name, css] of Object.entries(VARIANTS)) {
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   await page.goto(base); await sleep(1500);
   if (css) await page.addStyleTag({ content: css });
-  await page.setInputFiles('#fFiles', F(fs.readdirSync(path.join(fx, 'perf')).slice(0, 13).map(f => path.join(fx, 'perf', f)))); // 6 episodes + video
+  await page.setInputFiles('#fFiles', F(fs.readdirSync(path.join(fx, 'perf')).slice(0, process.env.ALL ? 999 : 13).map(f => path.join(fx, 'perf', f)))); // 6 episodes + video
   await sleep(5000);
   if (await page.evaluate(() => document.getElementById('mPair').classList.contains('open'))) await page.keyboard.press('Escape');
   const lay = await page.evaluate(() => {
@@ -52,11 +45,20 @@ for (const [name, css] of Object.entries(VARIANTS)) {
     const g = gaps.slice(3).sort((a, b) => b - a);
     return { frames: g.length, maxGap: Math.round(g[0] || 0), p99: Math.round(g[Math.floor(g.length * 0.01)] || 0), t: +v.currentTime.toFixed(1) };
   });
-  const r = { name, overlap, clickOk, hit: lay.hit, blocks: lay.blocks, perf };
+  const plain = await page.evaluate(async () => {
+    const a = document.getElementById('video'); const v = document.createElement('video'); v.src = a.currentSrc; v.muted = true; v.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;z-index:999;background:#000'; document.body.appendChild(v);
+    await new Promise(r => { v.onloadeddata = r; setTimeout(r, 5000); }); v.playbackRate = 4;
+    const gaps = []; let last = performance.now(), stop = false;
+    const f = t => { gaps.push(t - last); last = t; if (!stop) requestAnimationFrame(f); }; requestAnimationFrame(f);
+    await v.play(); await new Promise(r => setTimeout(r, 5000)); stop = true; v.pause(); v.remove();
+    const g = gaps.slice(3).sort((a, b) => b - a);
+    return { frames: g.length, maxGap: Math.round(g[0] || 0), p99: Math.round(g[Math.floor(g.length * 0.01)] || 0) };
+  });
+  const r = { name, overlap, clickOk, hit: lay.hit, blocks: lay.blocks, perf, plain };
   summary.push(r);
   console.log('VARIANT', JSON.stringify(r));
   const b = await page.screenshot({ type: 'jpeg', quality: 60 }); console.log(`SHOT_BEGIN ${engine}-${name}\n${b.toString('base64')}\nSHOT_END`);
   await page.close();
 }
 await browser.close(); server.close();
-console.log('SUMMARY', JSON.stringify(summary.map(s => ({ name: s.name, ok: !s.overlap && s.clickOk, p99: s.perf.p99, maxGap: s.perf.maxGap }))));
+console.log('SUMMARY', JSON.stringify(summary.map(s => ({ name: s.name, ok: !s.overlap && s.clickOk && s.hit === 'r-0-0', p99: s.perf.p99, maxGap: s.perf.maxGap, plainP99: s.plain.p99 }))));

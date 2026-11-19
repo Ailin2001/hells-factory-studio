@@ -16,4 +16,5 @@ jobs:
       - run: npm run build
       - run: npx playwright-core install webkit
       - run: node e2e/wk-diag.mjs webkit
+      - run: ALL=1 node e2e/wk-diag.mjs webkit
       - run: node e2e/web.mjs webkit

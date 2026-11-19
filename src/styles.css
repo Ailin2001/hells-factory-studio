@@ -203,7 +203,8 @@ body.asking .main{padding-right:404px}
 .gl{text-decoration:underline dotted var(--good);text-decoration-thickness:2px;text-underline-offset:4px}
 .hit{background:var(--hl-hit);border-radius:2px}
 
-/* cue list: off-screen rows are skipped by layout and paint so playback stays smooth */
+/* cue list: each episode block off screen is skipped by layout and paint so playback stays smooth.
+   Only the block level uses content-visibility: WebKit (Mac) collapses blocks when rows inside use it too. */
 .list{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;position:relative;contain:strict}
 .epb{content-visibility:auto}
 .eph{position:sticky;top:0;z-index:2;display:flex;gap:10px;align-items:baseline;padding:7px 14px;background:var(--panel2);border-bottom:1px solid var(--line);font-size:13px;cursor:pointer}
@@ -215,7 +216,7 @@ body.asking .main{padding-right:404px}
 .eph i.bad{color:var(--bad);background:none}
 .eph i.ed{color:var(--warn)}
 .eph .meta i.done{color:var(--good);font-weight:600}
-.row{display:grid;grid-template-columns:40px 26px 96px minmax(0,1fr) 46px;gap:10px;padding:7px 14px 7px 10px;border-left:3px solid transparent;border-bottom:1px solid var(--soft);cursor:pointer;content-visibility:auto;contain-intrinsic-size:auto 52px}
+.row{display:grid;grid-template-columns:40px 26px 96px minmax(0,1fr) 46px;gap:10px;padding:7px 14px 7px 10px;border-left:3px solid transparent;border-bottom:1px solid var(--soft);cursor:pointer}
 .list.srcon .row{grid-template-columns:40px 26px 96px minmax(0,.78fr) minmax(0,1fr) 46px}
 .row:hover{background:var(--hover)}
 .row.sw{border-left-color:var(--yellow)}

@@ -344,7 +344,7 @@ function renderList() {
       if (!passFilter(ep, ep.cues[ci], re)) continue;
       const h = rowHtml(ei, ci, re); rowCache.set(`r-${ei}-${ci}`, h); rows += h; n++;
     }
-    if (n) html += `<div class="epb" id="b-${ei}" style="contain-intrinsic-size:auto ${n * 52 + 36}px">` + headHtml(ei) + rows + '</div>';
+    if (n) html += `<div class="epb" id="b-${ei}" style="contain-intrinsic-size:auto ${n * 60 + 36}px">` + headHtml(ei) + rows + '</div>';
     else if (!re && S.filter === 'all') html += `<div class="epb" id="b-${ei}">` + headHtml(ei) + '<div class="none">ไฟล์นี้ไม่มีคิวซับ</div></div>';
   });
   if (!html) html = `<div class="none">ไม่มีคิวที่ตรงกับตัวกรองนี้</div>`;

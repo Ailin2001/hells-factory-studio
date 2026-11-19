@@ -25,7 +25,8 @@ async function launch() {
   for (let i = 0; i < 120 && !browser; i++) { try { browser = await chromium.connectOverCDP('http://127.0.0.1:9222'); } catch (e) { await sleep(500); } }
   if (!browser) throw new Error('could not attach to the app (WebView2 debugging port)');
   const ctx = browser.contexts()[0];
-  for (let i = 0; i < 40 && !page; i++) { page = ctx.pages().find(p => !p.url().startsWith('devtools')); if (!page) await sleep(500); }
+  for (let i = 0; i < 180 && !page; i++) { page = browser.contexts().flatMap(c => c.pages()).find(p => !p.url().startsWith('devtools')); if (!page) await sleep(500); }
+  if (!page) throw new Error('the app window did not appear within 90 s');
   errs = [];
   page.on('pageerror', e => errs.push(String(e)));
   page.on('console', m => { if (m.type() === 'error' && !/status of 4\d\d/.test(m.text())) errs.push('console: ' + m.text()); });

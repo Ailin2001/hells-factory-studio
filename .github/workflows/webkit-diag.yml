@@ -1,0 +1,19 @@
+name: WebKit list check
+
+on:
+  workflow_dispatch:
+
+jobs:
+  webkit:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npx playwright-core install webkit
+      - run: node e2e/wk-diag.mjs webkit
+      - run: node e2e/web.mjs webkit

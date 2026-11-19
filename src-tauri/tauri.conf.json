@@ -2,7 +2,7 @@
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Hells Factory Studio",
   "version": "0.1.0",
-  "identifier": "studio.hellsfactory.app",
+  "identifier": "studio.hellsfactory.desktop",
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:1420",
@@ -14,14 +14,15 @@
       {
         "label": "main",
         "title": "Hell's Factory Studio",
-        "width": 1500,
-        "height": 940,
-        "minWidth": 1100,
-        "minHeight": 680,
+        "width": 1280,
+        "height": 800,
+        "minWidth": 1000,
+        "minHeight": 600,
         "resizable": true,
         "fullscreen": false,
         "center": true,
-        "dragDropEnabled": false
+        "dragDropEnabled": false,
+        "maximized": true
       }
     ],
     "security": {

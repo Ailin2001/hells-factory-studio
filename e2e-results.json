@@ -1,0 +1,105 @@
+[
+  {
+    "name": "app opens and shows the UI",
+    "pass": true,
+    "detail": "Hell's Factory Studio · http://localhost:8768/index.html"
+  },
+  {
+    "name": "runs in desktop mode",
+    "pass": false,
+    "detail": ""
+  },
+  {
+    "name": "window fills the screen",
+    "pass": true,
+    "detail": {
+      "w": 1400,
+      "h": 757
+    }
+  },
+  {
+    "name": "open files: srt + mp4 + zip + 7z → 3 episodes",
+    "pass": true,
+    "detail": {
+      "pairOpen": false,
+      "heads": [
+        "EP01 | 测试剧_01_泰文.srt | SRT · 4 คิว · ปัญหา 1 · 原文 中文 · มีวิดีโอ",
+        "EP02 | 测试剧_02_泰文.srt | SRT · 2 คิว · 原文 中文 · ไม่มีวิดีโอ",
+        "EP03 | 测试剧_03_泰文.srt | SRT · 1 คิว · ไม่มี原文 · ไม่มีวิดีโอ"
+      ]
+    }
+  },
+  {
+    "name": "原文 matched to EP01",
+    "pass": true,
+    "detail": "EP01 | 测试剧_01_泰文.srt | SRT · 4 คิว · ปัญหา 1 · 原文 中文 · มีวิดีโอ"
+  },
+  {
+    "name": "video matched to EP01",
+    "pass": true,
+    "detail": "EP01 | 测试剧_01_泰文.srt | SRT · 4 คิว · ปัญหา 1 · 原文 中文 · มีวิดีโอ"
+  },
+  {
+    "name": "video loads",
+    "pass": true,
+    "detail": {
+      "src": true,
+      "ready": 4,
+      "dur": 8,
+      "err": null
+    }
+  },
+  {
+    "name": "video plays",
+    "pass": true,
+    "detail": {
+      "ok": true,
+      "from": 2.01334,
+      "to": 3.581171
+    }
+  },
+  {
+    "name": "waveform built from the video audio",
+    "pass": true,
+    "detail": {
+      "status": "ok",
+      "peaks": 800
+    }
+  },
+  {
+    "name": "edit marks unsaved, Ctrl+S saves",
+    "pass": true,
+    "detail": {
+      "dirty": "● ยังไม่บันทึก",
+      "saved": "✓ บันทึกแล้ว 12:05"
+    }
+  },
+  {
+    "name": "Ctrl+E opens export",
+    "pass": true,
+    "detail": ""
+  },
+  {
+    "name": "export writes a zip to disk",
+    "pass": false,
+    "detail": {
+      "outFiles": [],
+      "toast": "บันทึก 测试剧_02_修改.zip แล้ว"
+    }
+  },
+  {
+    "name": "language switch to English",
+    "pass": true,
+    "detail": "Open folder"
+  },
+  {
+    "name": "language switch to Chinese",
+    "pass": true,
+    "detail": "打开文件夹"
+  },
+  {
+    "name": "no script errors",
+    "pass": true,
+    "detail": []
+  }
+]

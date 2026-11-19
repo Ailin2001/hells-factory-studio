@@ -19,6 +19,7 @@ jobs:
       - uses: swatinem/rust-cache@v2
         with:
           workspaces: './src-tauri -> target'
+          cache-on-failure: true
 
       - run: npm ci
 
@@ -37,6 +38,26 @@ jobs:
           if (-not $exe) { throw 'installed app not found' }
           Write-Host "installed app: $($exe.FullName)"
           "APP_EXE=$($exe.FullName)" >> $env:GITHUB_ENV
+
+      - name: Smoke test - start the installed app and look at the screen
+        shell: pwsh
+        run: |
+          $p = Start-Process "$env:APP_EXE" -PassThru -RedirectStandardError app-err.txt -RedirectStandardOutput app-out.txt
+          Start-Sleep 15
+          Write-Host "app still running after 15 s: $(-not $p.HasExited)"
+          if ($p.HasExited) { Write-Host "exit code: $($p.ExitCode)" }
+          Write-Host '--- app stderr ---'; Get-Content app-err.txt -ErrorAction SilentlyContinue
+          Write-Host '--- app stdout ---'; Get-Content app-out.txt -ErrorAction SilentlyContinue
+          Get-Process | Where-Object { $_.ProcessName -match 'hells|msedgewebview2' } | Format-Table ProcessName, Id, MainWindowTitle -AutoSize | Out-String | Write-Host
+          Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+          $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+          $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
+          $g = [System.Drawing.Graphics]::FromImage($bmp); $g.CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
+          $small = New-Object System.Drawing.Bitmap $bmp, ([int]($b.Width / 2)), ([int]($b.Height / 2))
+          $ms = New-Object IO.MemoryStream; $small.Save($ms, [System.Drawing.Imaging.ImageFormat]::Jpeg)
+          Write-Host "SHOT_BEGIN smoke"; Write-Host ([Convert]::ToBase64String($ms.ToArray())); Write-Host "SHOT_END"
+          Get-WinEvent -LogName Application -MaxEvents 30 -ErrorAction SilentlyContinue | Where-Object { $_.ProviderName -match 'Application Error|Windows Error Reporting|\.NET Runtime' } | Format-List TimeCreated, ProviderName, Message | Out-String | Write-Host
+          if (-not $p.HasExited) { Stop-Process -Id $p.Id -Force }
 
       - name: Install tauri-driver and Edge WebDriver
         shell: pwsh

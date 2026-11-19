@@ -361,6 +361,9 @@ export const DICT = {
   "ส่งออก (Ctrl+E)": ["Export (Ctrl+E)", "导出 (Ctrl+E)"],
   "ไม่ระบุลูกค้า": ["No client", "未指定客户"],
   "ต้นฉบับ": ["Source", "原文"],
+  "สไตล์หน้าตา": ["Look", "界面风格"],
+  "Y2K เรโทร": ["Y2K retro", "Y2K 复古"],
+  "กระจกใส มินิมอล": ["Glass minimal", "玻璃简约"],
 };
 
 // Strings the app builds with numbers or names inside.

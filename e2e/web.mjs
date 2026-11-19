@@ -136,6 +136,9 @@ try {
     const lim = engine === 'webkit' ? 100 : 50; // CI Macs draw without a graphics card
     check(`playback at ${rate}× keeps the screen updating (p99 frame gap < ${lim} ms)`, r.p99 < lim && r.t > rate * 4, r);
   }
+  await page.click('#bMenu'); await page.selectOption('#skinSel', 'glass'); await page.keyboard.press('Escape'); await sleep(600);
+  check('second look (glass) can be chosen', await page.evaluate(() => document.documentElement.dataset.skin) === 'glass');
+  await shot('04-glass');
   await shot('03-perf');
   const pe = await page.evaluate(() => window.__errs || []);
   check('no script errors', !errs.length && !pe.length, errs.concat(pe));

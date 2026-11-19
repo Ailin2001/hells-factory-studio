@@ -945,6 +945,8 @@ const MOON = '<path d="M15 13.6A7.2 7.2 0 0 1 7.6 2.4a7.8 7.8 0 1 0 10 10.2 7 7 
 function isNight() { const r = document.documentElement, ui = r.dataset.ui; if (ui) return ui === 'night'; const ht = r.getAttribute('data-theme'); if (ht) return ht === 'dark'; return window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches; }
 function syncThemeBtn() { const n = isNight(); $('icoTheme').innerHTML = n ? SUN : MOON; $('txtTheme').textContent = n ? 'โหมดกลางวัน' : 'โหมดกลางคืน'; WV_COL = null; drawWave(); }
 $('bTheme').onclick = () => { document.documentElement.dataset.ui = isNight() ? 'day' : 'night'; store.set('ui', document.documentElement.dataset.ui); syncThemeBtn(); };
+{ const sk = store.get('skin', 'y2k') === 'glass' ? 'glass' : 'y2k'; if (sk === 'glass') document.documentElement.dataset.skin = 'glass'; $('skinSel').value = sk; }
+$('skinSel').addEventListener('change', () => { const v = $('skinSel').value; if (v === 'glass') document.documentElement.dataset.skin = 'glass'; else delete document.documentElement.dataset.skin; store.set('skin', v); WV_COL = null; waveSize.w = 0; layoutOverlay(); drawWave(); });
 new MutationObserver(syncThemeBtn).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 if (window.matchMedia) { const mq = matchMedia('(prefers-color-scheme: dark)'); if (mq.addEventListener) mq.addEventListener('change', syncThemeBtn); }
 (() => {

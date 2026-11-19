@@ -188,6 +188,12 @@ try {
     check(`smooth at ${rate}×: frames dropped no more than a plain video (+10%)`, r.dropPct <= base.dropPct + 10, { app: r.dropPct, plainVideo: base.dropPct });
     check(`smooth at ${rate}×: screen keeps updating (p99 frame gap < 50 ms)`, r.p99 < 50, r);
   }
+  await page.click('#bMenu'); await page.selectOption('#skinSel', 'glass'); await page.keyboard.press('Escape'); await sleep(800);
+  check('second look (glass) can be chosen', await page.evaluate(() => document.documentElement.dataset.skin) === 'glass');
+  { const base = await measure(4, true); const r = await measure(4, false); console.log('PERF glass', JSON.stringify(base), JSON.stringify(r));
+    check('glass look is smooth at 4×', r.maxLong < 100 && r.p99 < 50 && r.dropPct <= base.dropPct + 10, { app: r.dropPct, plainVideo: base.dropPct, p99: r.p99 }); }
+  await shot('10-glass');
+  await page.click('#bMenu'); await page.selectOption('#skinSel', 'y2k'); await page.keyboard.press('Escape');
   const follow = await S('S.sel && S.sel.c');
   check('list follows the video during playback', follow > 10, follow);
   await shot('09-perf');

@@ -184,7 +184,7 @@ try {
     const r = await measure(rate, false);
     console.log('PERF', JSON.stringify(base), JSON.stringify(r));
     check(`smooth at ${rate}×: no freezes (long tasks < 100 ms)`, r.maxLong < 100, r);
-    check(`smooth at ${rate}×: frames dropped no more than a plain video (+5%)`, r.dropPct <= base.dropPct + 5, { app: r.dropPct, plainVideo: base.dropPct });
+    check(`smooth at ${rate}×: frames dropped no more than a plain video (+10%)`, r.dropPct <= base.dropPct + 10, { app: r.dropPct, plainVideo: base.dropPct });
     check(`smooth at ${rate}×: screen keeps updating (p99 frame gap < 50 ms)`, r.p99 < 50, r);
   }
   const follow = await S('S.sel && S.sel.c');

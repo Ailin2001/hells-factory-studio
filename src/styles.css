@@ -436,3 +436,76 @@ details.why p{margin:8px 0 2px}
 .seg button[aria-pressed="true"] .cnt{color:inherit}
 /* Chromium (Windows app, Chrome, Edge) also skips single rows off screen; WebKit must not (it collapses the blocks) */
 body.cvrows .row{content-visibility:auto;contain-intrinsic-size:auto 60px}
+
+/* ================= Y2K desktop skin: outlined windows, gradient title bars, pixel type, pastel grid.
+   Night = synthwave: deep violet, neon outlines, sunset bars. Spacing stays roomy. ================= */
+:root{
+  --frame:#2a2440; --bw:2px; --hard:3px 3px 0 var(--frame); --hard-sm:2px 2px 0 var(--frame);
+  --bg:#bfe7ec; --bg2:#7fcfda; --grid:rgba(255,255,255,.65);
+  --panel2:#fdf1f7; --raise:#f1ecff; --line:#d9d2ea; --line2:#2a2440;
+  --accent:#ff7eb6; --accent-ink:#2b0f22; --accent-soft:rgba(255,126,182,.18); --blue:#1d8aa3; --blue-fill:#8fd8e6; --yellow:#f9cf7a;
+  --brand:linear-gradient(90deg,#ff9cc8 0%,#ffd38a 50%,#8fe0e8 100%); --bar-ink:#2a2440;
+  --winbtns:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='58' height='16'%3E%3Cg fill='%23fff' fill-opacity='.7' stroke='%232a2440' stroke-width='1.5'%3E%3Crect x='1' y='1' width='14' height='14' rx='2'/%3E%3Crect x='22' y='1' width='14' height='14' rx='2'/%3E%3Crect x='43' y='1' width='14' height='14' rx='2'/%3E%3C/g%3E%3Cpath d='M4 11h8M26 5h6v6h-6zM47 5l6 6M53 5l-6 6' fill='none' stroke='%232a2440' stroke-width='1.5'/%3E%3C/svg%3E");
+}
+:root[data-theme="dark"]:not([data-ui="day"]),:root[data-ui="night"]{
+  --frame:#ff4fa0; --hard:0 0 0 1px rgba(255,79,160,.35),0 0 20px rgba(255,79,160,.28); --hard-sm:0 0 10px rgba(255,79,160,.3);
+  --bg:#160b2e; --bg2:#2a0d43; --grid:rgba(255,79,160,.12);
+  --panel2:#221841; --raise:#2c2155; --line:rgba(255,255,255,.1); --line2:#6a4aa8;
+  --accent:#ff4fa0; --accent-ink:#1d0616; --accent-soft:rgba(255,79,160,.16); --blue:#3ee6ff; --blue-fill:#1d6f86; --yellow:#ffb347;
+  --brand:linear-gradient(90deg,#ff4fa0 0%,#ff8a3d 55%,#ffd36e 100%); --bar-ink:#1d0616;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]):not([data-ui="day"]){
+  --frame:#ff4fa0; --hard:0 0 0 1px rgba(255,79,160,.35),0 0 20px rgba(255,79,160,.28); --hard-sm:0 0 10px rgba(255,79,160,.3);
+  --bg:#160b2e; --bg2:#2a0d43; --grid:rgba(255,79,160,.12);
+  --panel2:#221841; --raise:#2c2155; --line:rgba(255,255,255,.1); --line2:#6a4aa8;
+  --accent:#ff4fa0; --accent-ink:#1d0616; --accent-soft:rgba(255,79,160,.16); --blue:#3ee6ff; --blue-fill:#1d6f86; --yellow:#ffb347;
+  --brand:linear-gradient(90deg,#ff4fa0 0%,#ff8a3d 55%,#ffd36e 100%); --bar-ink:#1d0616;
+} }
+body{background-size:36px 36px,36px 36px,100% 100%}
+.appbar{margin:12px 16px 0;border:var(--bw) solid var(--frame);border-radius:12px;box-shadow:var(--hard)}
+.appbar::after{display:none}
+.logo{font-size:14px}
+.logo-sub{border:1.5px solid var(--frame);background:var(--yellow);color:#2a1c05}
+.projbtn{border:1.5px solid var(--frame);box-shadow:var(--hard-sm);background:var(--panel2)}
+.savest{border:1.5px solid var(--frame);background:var(--panel);font-family:var(--font-mono)}
+.critbar{padding:10px 18px 8px;color:var(--ink)}
+.pane{border:var(--bw) solid var(--frame);border-radius:12px;box-shadow:var(--hard)}
+.pane::before{content:attr(data-title);flex:none;display:block;padding:5px 12px;font-family:var(--font-pixel);font-size:12.5px;letter-spacing:.08em;color:var(--bar-ink);
+  background:var(--winbtns) right 10px center/58px 16px no-repeat,var(--brand);border-bottom:var(--bw) solid var(--frame)}
+.btn{border:1.5px solid var(--frame);box-shadow:var(--hard-sm)}
+.btn:hover:not(:disabled){transform:translate(-1px,-1px);background:var(--panel)}
+.btn:active:not(:disabled){transform:translate(1px,1px);box-shadow:none}
+.btn:disabled{box-shadow:none}
+.btn.primary{border-color:var(--frame)}
+.btn.ai,.btn.ask{background:var(--blue-fill);color:var(--ink);border-color:var(--frame)}
+.btn.ai:hover:not(:disabled),.btn.ask:hover:not(:disabled){background:var(--blue-fill);border-color:var(--frame)}
+#bQA{background:var(--yellow);color:#2a1c05}
+.btn.play{border-color:var(--frame);font-family:var(--font-pixel);font-size:12px}
+.btn.ghost{box-shadow:none;border-color:transparent}
+.iconbtn{border:1.5px solid var(--frame);box-shadow:var(--hard-sm)}
+.field,.search{border:1.5px solid var(--frame)}
+.seg{border:1.5px solid var(--frame)}
+.seg button{border-right:1.5px solid var(--frame)}
+.tg[aria-pressed="true"]{border:1.5px solid var(--frame);background:var(--accent-soft)}
+.pill,.chipinfo{border:1.5px solid var(--frame)}
+.pill.prog .pbar{border:1px solid var(--frame);height:8px;border-radius:2px;background:var(--panel)}
+.pill.prog .pbar span{background:repeating-linear-gradient(90deg,var(--blue-fill) 0 5px,transparent 5px 7px)}
+.menu,.askpanel,.card{border:var(--bw) solid var(--frame);box-shadow:var(--hard)}
+.card{border-radius:12px}
+.card h2{font-family:var(--font-ui);background:var(--winbtns) right 14px center/58px 16px no-repeat,var(--brand);color:var(--bar-ink);border-bottom:var(--bw) solid var(--frame);padding:10px 24px}
+.card h2::after{display:none}
+.ask-h{margin:-14px -14px 0;padding:8px 12px;background:var(--brand);color:var(--bar-ink);border-bottom:var(--bw) solid var(--frame);border-radius:10px 10px 0 0}
+.ask-h b{font-family:var(--font-pixel);font-size:12.5px;letter-spacing:.06em}
+.eph{border-bottom:1.5px solid var(--frame);background:var(--panel2)}
+.eph b{font-size:12.5px}
+.editor{border-top:var(--bw) solid var(--frame)}
+.wave{border-top:var(--bw) solid var(--frame);border-bottom:var(--bw) solid var(--frame)}
+.transport{border-top:0}
+.toast{border:var(--bw) solid var(--frame);background:var(--panel);color:var(--ink);box-shadow:var(--hard)}
+.toast .btn{border-color:var(--frame)}
+.newproj,.prov,.pitem,.gdrop,fieldset,details{border-color:var(--frame);border-width:1.5px}
+.gdrop{border-style:dashed}
+.pitem.cur{border-color:var(--frame);background:var(--accent-soft)}
+.split::after{background:var(--frame);opacity:.4}
+kbd{border-color:var(--frame)}
+.ph-in strong{font-family:var(--font-ui)}

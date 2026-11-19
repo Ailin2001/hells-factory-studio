@@ -238,7 +238,9 @@ const DEF_LEX = {
   prof: 'กู มึง เหี้ย เชี่ย สัส แม่ง อีห่า ตายห่า ควย เย็ด หี หมอย ร่าน กะหรี่ อีกะหรี่ อีดอกทอง อีตอแหล อีควาย พ่อมึง แม่มึง จัญไร เจ๊ก นิโกร อีดำ',
   period: 'ครับ > ขอรับ\nค่ะ > เจ้าค่ะ\nคะ > เจ้าคะ\nนะครับ > นะ/ขอรับ\nนะคะ > นะ/เจ้าคะ\nผม > ข้า\nฉัน > ข้า\nคุณ > ท่าน/เจ้า\nเธอ > เจ้า\nนาย > เจ้า/ท่าน\nแก > เจ้า\nไหม > หรือไม่\nมั้ย > หรือไม่\nเหรอ > หรือ\nหรอ > หรือ\nยังไง > อย่างไร\nงั้น > เช่นนั้น\nแบบนี้ > เช่นนี้\nแบบนั้น > เช่นนั้น\nเมื่อไหร่ > เมื่อใด\nเถอะ > เถิด\nโอเค > ตกลง\nเปิ่นกง > ข้า\nเจิ้น > เรา/ข้า',
   modern: 'ข้า > ฉัน/ผม\nข้าน้อย > ผม/ฉัน\nเจ้า > เธอ/นาย\nท่านพ่อ > พ่อ\nท่านแม่ > แม่\nกระหม่อม >\nหม่อมฉัน >\nอิฉัน > ฉัน\nเพคะ >\nพ่ะย่ะค่ะ >\nขอรับ > ครับ\nเจ้าค่ะ > ค่ะ\nเจ้าคะ > คะ',
-  spell: 'อนุญาติ > อนุญาต\nสังเกตุ > สังเกต\nลายเซ็นต์ > ลายเซ็น\nกระทันหัน > กะทันหัน\nนะค่ะ > นะคะ\nนะค๊ะ > นะคะ\nค๊ะ > คะ\nหรอ > เหรอ\nหล่ะ > ล่ะ\nราชวงค์ > ราชวงศ์\nโอกาศ > โอกาส\nปฎิบัติ > ปฏิบัติ\nปฎิเสธ > ปฏิเสธ\nปรากฎ > ปรากฏ\nกฏ > กฎ\nผลลัพท์ > ผลลัพธ์\nรสชาด > รสชาติ\nศรีษะ > ศีรษะ\nอิสระภาพ > อิสรภาพ\nสัญญลักษณ์ > สัญลักษณ์\nคำนวน > คำนวณ\nทรมาณ > ทรมาน\nบุคคลากร > บุคลากร\nเครื่องสำอางค์ > เครื่องสำอาง\nไอศครีม > ไอศกรีม\nคุ้กกี้ > คุกกี้\nอีเมล์ > อีเมล\nโน๊ต > โน้ต\nฟังก์ชั่น > ฟังก์ชัน\nเวอร์ชั่น > เวอร์ชัน\nผาสุข > ผาสุก\nกงศุล > กงสุล\nดำรงค์ > ดำรง\nลูกเกต > ลูกเกด\nเกมส์ > เกม\nช็อค > ช็อก\nโควต้า > โควตา\nสาระพัด > สารพัด\nอัฒจรรย์ > อัฒจันทร์\nเอ็นจอย > เอนจอย',
+  spell: 'อนุญาติ > อนุญาต\nสังเกตุ > สังเกต\nลายเซ็นต์ > ลายเซ็น\nกระทันหัน > กะทันหัน\nนะค่ะ > นะคะ\nนะค๊ะ > นะคะ\nค๊ะ > คะ\nหรอ > เหรอ\nหล่ะ > ล่ะ\nราชวงค์ > ราชวงศ์\nโอกาศ > โอกาส\nปฎิบัติ > ปฏิบัติ\nปฎิเสธ > ปฏิเสธ\nปรากฎ > ปรากฏ\nกฏ > กฎ\nผลลัพท์ > ผลลัพธ์\nรสชาด > รสชาติ\nศรีษะ > ศีรษะ\nอิสระภาพ > อิสรภาพ\nสัญญลักษณ์ > สัญลักษณ์\nคำนวน > คำนวณ\nทรมาณ > ทรมาน\nบุคคลากร > บุคลากร\nเครื่องสำอางค์ > เครื่องสำอาง\nไอศครีม > ไอศกรีม\nคุ้กกี้ > คุกกี้\nอีเมล์ > อีเมล\nโน๊ต > โน้ต\nฟังก์ชั่น > ฟังก์ชัน\nเวอร์ชั่น > เวอร์ชัน\nผาสุข > ผาสุก\nกงศุล > กงสุล\nดำรงค์ > ดำรง\nลูกเกต > ลูกเกด\nเกมส์ > เกม\nช็อค > ช็อก\nโควต้า > โควตา\nสาระพัด > สารพัด\nอัฒจรรย์ > อัฒจันทร์\nเอ็นจอย > เอนจอย\nกะเพาะ > กระเพาะ\nกระเพรา > กะเพรา\nกังวาล > กังวาน\nกากบาด > กากบาท\nกาละเทศะ > กาลเทศะ\nกิติมศักดิ์ > กิตติมศักดิ์\nเกล็ดความรู้ > เกร็ดความรู้\nเกษียนอายุ > เกษียณอายุ\nขะโมย > ขโมย\nข้าวเหนียวมูล > ข้าวเหนียวมูน\nไข่มุข > ไข่มุก\nคลินิค > คลินิก\nคัดสรรค์ > คัดสรร\nโครงการณ์ > โครงการ\nฆาตรกร > ฆาตกร\nฆาตรกรรม > ฆาตกรรม\nจลาจน > จลาจล\nจักรพรรดิ์ > จักรพรรดิ\nจารไน > จาระไน\nจำนงค์ > จำนง\nเจตนารมย์ > เจตนารมณ์\nฉนั้น > ฉะนั้น\nชงัก > ชะงัก\nซีรี่ส์ > ซีรีส์\nทราบซึ้ง > ซาบซึ้ง\nดาดดื่น > ดาษดื่น\nดึกดำบรรพ > ดึกดำบรรพ์\nตระเวณ > ตระเวน\nทะเลสาป > ทะเลสาบ\nธุระกิจ > ธุรกิจ\nนวตกรรม > นวัตกรรม\nนัยตา > นัยน์ตา\nนานับประการ > นานัปการ\nบิณฑบาตร > บิณฑบาต\nบุคคลิก > บุคลิก\nบัลลังค์ > บัลลังก์\nปฎิกิริยา > ปฏิกิริยา\nปฎิทิน > ปฏิทิน\nปฎิวัติ > ปฏิวัติ\nปฎิญาณ > ปฏิญาณ\nประสพการณ์ > ประสบการณ์\nประสพความสำเร็จ > ประสบความสำเร็จ\nประสพอุบัติเหตุ > ประสบอุบัติเหตุ\nปลาบปลิ้ม > ปลาบปลื้ม\nผลัดวันประกันพรุ่ง > ผัดวันประกันพรุ่ง\nผูกพันธ์ > ผูกพัน\nพงษาวดาร > พงศาวดาร\nพรรณา > พรรณนา\nพิศดาร > พิสดาร\nเพชรฆาต > เพชฌฆาต\nภาพยนต์ > ภาพยนตร์\nมงกุฏ > มงกุฎ\nมนุษย์สัมพันธ์ > มนุษยสัมพันธ์\nมหัสจรรย์ > มหัศจรรย์\nมัสหมั่น > มัสมั่น\nมุขตลก > มุกตลก\nรื่นรมณ์ > รื่นรมย์\nริดรอน > ลิดรอน\nเลือกสรรค์ > เลือกสรร\nโลกาภิวัฒน์ > โลกาภิวัตน์\nสาบแช่ง > สาปแช่ง\nสาปสูญ > สาบสูญ\nสีสรร > สีสัน\nหลงไหล > หลงใหล\nหลับไหล > หลับใหล\nอะหลั่ย > อะไหล่\nอานิสงฆ์ > อานิสงส์\nอัพเดท > อัปเดต\nอัพเดต > อัปเดต\nกรุนา > กรุณา\nศรัตรู > ศัตรู\nพิถิพิถัน > พิถีพิถัน\nมาตราฐาน > มาตรฐาน\nอุปสรรค์ > อุปสรรค\nเทคโนโลยี่ > เทคโนโลยี\nแอพพลิเคชั่น > แอปพลิเคชัน\nแอพพลิเคชัน > แอปพลิเคชัน\nอินเตอร์เน็ต > อินเทอร์เน็ต\nอินเตอร์เน็ท > อินเทอร์เน็ต\nคอนเสริต > คอนเสิร์ต\nซอฟท์แวร์ > ซอฟต์แวร์\nเซ็นต์สัญญา > เซ็นสัญญา\nลิฟท์ > ลิฟต์\nคริสมาส > คริสต์มาส\nสตอเบอรี่ > สตรอว์เบอร์รี\nบัตรเครดิท > บัตรเครดิต\nเครดิท > เครดิต\nดิจิตอล > ดิจิทัล\nโน๊ตบุ๊ค > โน้ตบุ๊ก\nโน้ตบุ๊ค > โน้ตบุ๊ก\nบล๊อก > บล็อก\nเค๊ก > เค้ก\nช้อปปิ้ง > ช็อปปิ้ง\nแทปเลต > แท็บเล็ต\nอะลุ่มอล่วย > อะลุ้มอล่วย\nเบญจเพศ > เบญจเพส\nสัมนา > สัมมนา\nทะยอย > ทยอย\nทนุถนอม > ทะนุถนอม\nเหม็นสาป > เหม็นสาบ\nปิคนิค > ปิกนิก\nเปอร์เซนต์ > เปอร์เซ็นต์\nบังสกุล > บังสุกุล\nจรเข้ > จระเข้\nตระกร้า > ตะกร้า\nตระไคร้ > ตะไคร้\nสใภ้ > สะใภ้\nกระทิ > กะทิ\nกาละมัง > กะละมัง\nกลาสี > กะลาสี\nเครื่องลาง > เครื่องราง\nสถิตย์ > สถิต\nชักกะเย่อ > ชักเย่อ\nอุตสาห์ > อุตส่าห์\nเกียรติ์ > เกียรติ\nญาติ์ > ญาติ\nโครต > โคตร\nนาลิกา > นาฬิกา\nฟ้าแลป > ฟ้าแลบ\nเวทย์มนต์ > เวทมนตร์\nเวทย์มนตร์ > เวทมนตร์\nเวทมนต์ > เวทมนตร์\nองค์รักษ์ > องครักษ์\nอาจารณ์ > อาจารย์\nจอมยุทธ์ > จอมยุทธ\nยุทธ์ภพ > ยุทธภพ\nวิทยายุทธ์ > วิทยายุทธ\nปรมาจารณ์ > ปรมาจารย์\nฮองเต้ > ฮ่องเต้\nอาวุท > อาวุธ\nปีสาจ > ปีศาจ\nสวรรณ์ > สวรรค์\nวิญญาน > วิญญาณ\nหลักฐาณ > หลักฐาน\nบริษัธ > บริษัท\nธนาคาน > ธนาคาร\nโรงพญาบาล > โรงพยาบาล\nอุบัตเหตุ > อุบัติเหตุ\nโทรศัพย์ > โทรศัพท์\nไปรษนีย์ > ไปรษณีย์\nขอโทด > ขอโทษ\nทุเรด > ทุเรศ\nเกลงใจ > เกรงใจ\nอนาคด > อนาคต\nอดีด > อดีต\nประวัติศาสต์ > ประวัติศาสตร์\nวิทยาศาสต์ > วิทยาศาสตร์\nเศรฐกิจ > เศรษฐกิจ\nเศรษฐี่ > เศรษฐี\nทรัพสิน > ทรัพย์สิน\nพิสูทธิ์ > พิสูจน์\nยุตธรรม > ยุติธรรม\nอนุเสาวรีย์ > อนุสาวรีย์\nสังสรรณ์ > สังสรรค์\nสร้างสรรณ์ > สร้างสรรค์\nริศยา > ริษยา\nผเอิญ > เผอิญ\nผิวพรรน > ผิวพรรณ\nพรรยา > ภรรยา\nมารยาด > มารยาท\nขมักเขม้น > ขะมักเขม้น\nไหลตาย > ใหลตาย\nเบรค > เบรก\nบุฟเฟ่ต์ > บุฟเฟต์\nแซนวิช > แซนด์วิช\nตุ้กตา > ตุ๊กตา\nเนี้ย > เนี่ย\nปราณีต > ประณีต\nกระตือรือล้น > กระตือรือร้น\nไหมค่ะ > ไหมคะ\nมั้ยค่ะ > มั้ยคะ\nเหรอค่ะ > เหรอคะ\nหรือเปล่าค่ะ > หรือเปล่าคะ\nทำไมค่ะ > ทำไมคะ\nยังไงค่ะ > ยังไงคะ\nที่ไหนค่ะ > ที่ไหนคะ\nเมื่อไหร่ค่ะ > เมื่อไหร่คะ\nขอบคุณคะ > ขอบคุณค่ะ\nสวัสดีคะ > สวัสดีค่ะ\nขอโทษคะ > ขอโทษค่ะ',
+  spellEn: 'recieve > receive\nrecieved > received\ndefinately > definitely\nseperate > separate\noccured > occurred\nuntill > until\nwich > which\nteh > the\nbecuase > because\nbeleive > believe\nalot > a lot\nthier > their\ntruely > truly\ngoverment > government\ntommorow > tomorrow\ntomorow > tomorrow\naccomodate > accommodate\nwierd > weird\nfreind > friend\nbegining > beginning\ncomming > coming\nneccessary > necessary\noccassion > occasion\ndissapear > disappear\nembarass > embarrass\nexistance > existence\nforiegn > foreign\ngaurd > guard\nhappend > happened\nimmediatly > immediately\nindependant > independent\nknowlege > knowledge\nnoticable > noticeable\npersistant > persistent\nposession > possession\nprefered > preferred\npublically > publicly\nremeber > remember\nresponsability > responsibility\nsuccesful > successful\nsuprise > surprise\nunfortunatly > unfortunately\nyoure > you\'re\ndont > don\'t\ndidnt > didn\'t\ndoesnt > doesn\'t\nisnt > isn\'t\nwasnt > wasn\'t\ncouldnt > couldn\'t\nshouldnt > shouldn\'t\nwouldnt > wouldn\'t\nhavent > haven\'t\nim > I\'m\nive > I\'ve\nlets go > let\'s go\nyour welcome > you\'re welcome\ncould of > could have\nshould of > should have\nwould of > would have',
+  spellZh: '以经 > 已经\n己经 > 已经\n自已 > 自己\n在见 > 再见\n做为 > 作为\n按装 > 安装\n既使 > 即使\n必竟 > 毕竟\n一但 > 一旦\n迫不急待 > 迫不及待\n再接再励 > 再接再厉\n谈笑风声 > 谈笑风生\n默守成规 > 墨守成规\n穿流不息 > 川流不息\n甘败下风 > 甘拜下风\n走头无路 > 走投无路\n一愁莫展 > 一筹莫展\n关怀倍至 > 关怀备至\n不径而走 > 不胫而走\n按步就班 > 按部就班\n震憾 > 震撼\n松驰 > 松弛\n精萃 > 精粹\n辨论 > 辩论\n布署 > 部署\n幅射 > 辐射\n气慨 > 气概\n帐号 > 账号\n渡假 > 度假\n煤体 > 媒体\n侯车 > 候车\n暴燥 > 暴躁\n烦燥 > 烦躁\n安祥 > 安详\n针贬 > 针砭\n家俱 > 家具\n装璜 > 装潢\n九宵 > 九霄\n兴高彩烈 > 兴高采烈\n名符其实 > 名副其实\n一股作气 > 一鼓作气\n莫明其妙 > 莫名其妙\n出奇不意 > 出其不意\n一如继往 > 一如既往\n饮鸠止渴 > 饮鸩止渴\n世外桃园 > 世外桃源\n黄梁美梦 > 黄粱美梦\n鬼鬼崇崇 > 鬼鬼祟祟\n破斧沉舟 > 破釜沉舟\n人情事故 > 人情世故\n有持无恐 > 有恃无恐\n挖墙角 > 挖墙脚\n即然 > 既然\n不可思义 > 不可思议\n哭笑不的 > 哭笑不得',
   allow: 'ตัดผม สระผม ทรงผม เส้นผม หวีผม ย้อมผม มัดผม ผูกผม ไดร์ผม ผมยาว ผมสั้น ผมหงอก ผมร่วง ผมเปีย ผมม้า ปิ่นปักผม ร้านทำผม ช่างทำผม ทำผม ผมขาว ผมดำ ผมเผ้า เกล้าผม ถักผม ไรผม ผมหยิก ผมตรง คุณหนู คุณชาย คุณหญิง คุณนาย คุณท่าน คุณธรรม คุณค่า คุณภาพ คุณสมบัติ คุณประโยชน์ บุญคุณ ขอบคุณ นายท่าน นายน้อย นายหญิง นายพล นายกอง นายอำเภอ นายก นายทุน นายหน้า นายจ้าง เจ้านาย นายทหาร แกง แกล้ง เจ้าหน้าที่ เจ้านาย เจ้าของ เจ้าสาว เจ้าบ่าว เจ้าภาพ เจ้าชาย เจ้าหญิง เจ้าพ่อ เจ้าแม่ เจ้าตัว เจ้ามือ เจ้าหนี้ เจ้าเล่ห์ เจ้าถิ่น เจ้าประจำ เจ้าที่ เจ้าอาวาส เจ้าพระยา เจ้าเมือง เจ้าสำนัก เจ้ากรม ข้าราชการ ข้าราชบริพาร ข้าวของ ผ้าไหม ไหมพรม ไหมขัดฟัน',
   conj: 'แต่ ที่ ว่า เพื่อ เพราะ ถ้า หาก ก็ และ หรือ แล้ว จึง เมื่อ ซึ่ง โดย จน ตั้งแต่ แม้'
 };
@@ -264,6 +266,8 @@ function compileLex(lx) {
     profE: words(lx.prof).map(w => ({ w, c: 'bad' })).sort(byLen),
     periodE: tag(pairs(lx.period)), modernE: tag(pairs(lx.modern)),
     spell: pairs(lx.spell).filter(p => p[1]).sort((a, b) => b[0].length - a[0].length),
+    spellEn: pairs(lx.spellEn).filter(p => p[1]).map(([w, r]) => ({ w, r, rx: new RegExp('(?<![A-Za-z\'])' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/ /g, '\\s+') + '(?![A-Za-z\'])', 'gi') })),
+    spellZh: pairs(lx.spellZh).filter(p => p[1]).sort((a, b) => b[0].length - a[0].length),
     conj: words(lx.conj),
     allow: words(lx.allow).sort((a, b) => b.length - a.length)
   };
@@ -278,21 +282,34 @@ const CAT = {
   era: ['w', 'คำไม่เข้ายุค'], lstart: ['w', 'ขึ้นบรรทัดด้วย ๆ/คำลงท้าย'], tear: ['w', 'ตัดบรรทัดกลางคำ'], card: ['w', '画面字ปนบทพูด'], dash: ['w', 'รูปแบบสองคนพูด'],
   bspace: ['w', 'เว้นวรรคชิดวงเล็บ/='], bwidth: ['w', 'ชนิดวงเล็บผิด'], repeat: ['w', 'คำซ้ำติดกัน'], srcbrk: ['w', 'วงเล็บไม่ตรง原文'], gloss: ['w', '术语ไม่ตรง'], miss: ['w', '原文ไม่มีคำแปล'],
   canjoin: ['i', 'รวมบรรทัดได้'], latin: ['i', 'มีอักษรอังกฤษ'], long: ['i', 'คิวยาวเกิน'], ratio: ['i', 'ยาว/สั้นผิดปกติเทียบ原文'], nosrc: ['i', 'ไม่มี原文ตรงเวลา'],
-  num: ['i', 'ตัวเลขไม่ตรง原文'], money: ['i', 'ค่าเงิน']
+  num: ['i', 'ตัวเลขไม่ตรง原文'], money: ['i', 'ค่าเงิน'],
+  typo: ['e', 'พิมพ์ผิด'], script: ['e', 'อักษรผิดภาษา']
 };
-const FIXABLE = new Set(['yamok', 'space', 'dupmark', 'spell', 'hehe', 'canjoin', 'punct', 'bwidth', 'bspace', 'dash']);
+const FIXABLE = new Set(['typo', 'yamok', 'space', 'dupmark', 'spell', 'hehe', 'canjoin', 'punct', 'bwidth', 'bspace', 'dash']);
 const BASE = { mode: 'len', limit: 40, maxLines: 2, cpsMax: 0, cpsMode: 'len', minDur: 0, maxDur: 0, punct: 'strict', particles: 'dense', denseN: 3, bracket: 'half' };
 const PRESETS = [
-  ['hf', "มาตรฐาน Hell's Factory · len 40", Object.assign({}, BASE)],
-  ['se40', 'SE 40 · 2 บรรทัด', Object.assign({}, BASE, { mode: 'se' })],
-  ['wetvh', 'WeTV แนวนอน · len 40 · CPS 25', Object.assign({}, BASE, { cpsMax: 25, minDur: 833, maxDur: 7000, punct: 'off' })],
-  ['wetvv', 'WeTV แนวตั้ง · len 24 · CPS 25', Object.assign({}, BASE, { limit: 24, cpsMax: 25, minDur: 833, maxDur: 7000, punct: 'off' })],
-  ['yw', 'YW แนวตั้ง · len 25', Object.assign({}, BASE, { limit: 25, punct: 'off' })],
-  ['v30', 'แนวตั้ง · len 30 · CPS 30', Object.assign({}, BASE, { limit: 30, cpsMax: 30 })],
-  ['se35', 'SE 35 · 2 บรรทัด', Object.assign({}, BASE, { mode: 'se', limit: 35 })],
-  ['dub20', 'พากย์ AI · SE 20', Object.assign({}, BASE, { mode: 'se', limit: 20 })]
+  ['hf', "มาตรฐาน Hell's Factory · len 40", Object.assign({}, BASE), 'th'],
+  ['se40', 'SE 40 · 2 บรรทัด', Object.assign({}, BASE, { mode: 'se' }), 'th'],
+  ['wetvh', 'WeTV แนวนอน · len 40 · CPS 25', Object.assign({}, BASE, { cpsMax: 25, minDur: 833, maxDur: 7000, punct: 'off' }), 'th'],
+  ['wetvv', 'WeTV แนวตั้ง · len 24 · CPS 25', Object.assign({}, BASE, { limit: 24, cpsMax: 25, minDur: 833, maxDur: 7000, punct: 'off' }), 'th'],
+  ['yw', 'YW แนวตั้ง · len 25', Object.assign({}, BASE, { limit: 25, punct: 'off' }), 'th'],
+  ['v30', 'แนวตั้ง · len 30 · CPS 30', Object.assign({}, BASE, { limit: 30, cpsMax: 30 }), 'th'],
+  ['se35', 'SE 35 · 2 บรรทัด', Object.assign({}, BASE, { mode: 'se', limit: 35 }), 'th'],
+  ['dub20', 'พากย์ AI · SE 20', Object.assign({}, BASE, { mode: 'se', limit: 20 }), 'th'],
+  ['zh16', 'ซับจีน · 16 ตัว · 1 บรรทัด', Object.assign({}, BASE, { limit: 16, maxLines: 1, particles: 'off', bracket: 'full' }), 'zh'],
+  ['zh18', 'ซับจีน · 18 ตัว · 2 บรรทัด', Object.assign({}, BASE, { limit: 18, particles: 'off', bracket: 'full' }), 'zh'],
+  ['zhv', 'ซับจีนแนวตั้ง · 12 ตัว', Object.assign({}, BASE, { limit: 12, particles: 'off', bracket: 'full' }), 'zh'],
+  ['en42', 'ซับอังกฤษ · 42 ตัว · CPS 20', Object.assign({}, BASE, { limit: 42, cpsMax: 20, punct: 'off', particles: 'off' }), 'en'],
+  ['en32v', 'ซับอังกฤษแนวตั้ง · 32 ตัว', Object.assign({}, BASE, { limit: 32, cpsMax: 20, punct: 'off', particles: 'off' }), 'en']
 ];
-const DEF_CFG = Object.assign({ preset: 'hf' }, BASE, { era: 'off', ratioLo: 1.2, ratioHi: 4.5, off: [] });
+const presetsFor = tgt => PRESETS.filter(p => (p[3] || 'th') === (tgt || 'th'));
+const DEF_CFG = Object.assign({ preset: 'hf' }, BASE, { era: 'off', ratioLo: 1.2, ratioHi: 4.5, off: [], src: 'auto', tgt: 'th' });
+function cfgForTarget(tgt, src) {
+  const p = presetsFor(tgt)[0];
+  return Object.assign({}, DEF_CFG, p ? p[2] : {}, { preset: p ? p[0] : 'custom', tgt: tgt || 'th', src: src || 'auto' });
+}
+const TGT_NAME = { th: 'ไทย', zh: 'จีน', en: 'อังกฤษ' };
+const DENS = { zh: 1, ja: 1, ko: 1.67, th: 3, en: 3.1, other: 3 };
 
 const lineOf = (offs, pos) => { let i = 0; while (i + 1 < offs.length && offs[i + 1] <= pos) i++; return i; };
 function joinLines(ls) {
@@ -330,6 +347,7 @@ function analyzeEpisode(cues, src, cfg, L, gloss, opt) {
       R[k].src = list; list.forEach(j => owners[j]++);
     });
   }
+  const T = cfg.tgt || 'th', TH = T === 'th';
   cues.forEach((c, k) => {
     const t = c.t, lines = t.split('\n'), o = R[k], si = segInfo(t);
     const offs = []; { let p = 0; for (const l of lines) { offs.push(p); p += l.length + 1; } }
@@ -357,14 +375,38 @@ function analyzeEpisode(cues, src, cfg, L, gloss, opt) {
     }
     if (!opt.ass && k + 1 < cues.length && c.em > cues[k + 1].sm) add(k, 'overlap', `ทับคิวถัดไป ${c.em - cues[k + 1].sm} ms`);
 
-    f = false; scan(/[㐀-䶿一-鿿豈-﫿぀-ヿ가-힯]+/g, m => { mk(m.index, m.index + m[0].length, 'bad'); f = true; }); if (f) add(k, 'cjk', 'มีอักษรจีน/ญี่ปุ่น/เกาหลีในคำแปล');
-    if (/[A-Za-z]{2,}/.test(stripTags(t))) add(k, 'latin', 'มีอักษรอังกฤษ');
-    f = false; scan(/(?<=\S)ๆ|ๆ(?=\S)/g, m => { mk(m.index, m.index + 1, 'bad'); f = true; }); if (f) add(k, 'yamok', 'ๆ ต้องเว้นวรรคหน้าและหลัง');
+    if (TH) { f = false; scan(/[㐀-䶿一-鿿豈-﫿぀-ヿ가-힯]+/g, m => { mk(m.index, m.index + m[0].length, 'bad'); f = true; }); if (f) add(k, 'cjk', 'มีอักษรจีน/ญี่ปุ่น/เกาหลีในคำแปล'); }
+    else { f = false; scan(T === 'zh' ? /[ก-๛]+/g : /[ก-๛\u3400-\u9fff\uf900-\ufaff\u3040-\u30ff\uac00-\ud7af]+/g, m => { mk(m.index, m.index + m[0].length, 'bad'); f = true; }); if (f) add(k, 'script', T === 'zh' ? 'มีอักษรไทยในซับจีน' : 'มีอักษรไทย/จีนในซับอังกฤษ'); }
+    if (T !== 'en' && /[A-Za-z]{2,}/.test(stripTags(t))) add(k, 'latin', 'มีอักษรอังกฤษ');
+    f = false; scan(/[\u200b-\u200f\u2060\ufeff\u00ad]/g, m => { mk(m.index, m.index + 1, 'bad'); f = true; }); if (f) add(k, 'typo', 'มีอักขระมองไม่เห็น (ก๊อปมาจากที่อื่น)');
+    if (/[\u0e01-\u0e5b]/.test(t)) {
+      const ty = [];
+      const tyScan = (rx, msg) => { let hit = false; scan(rx, m => { mk(m.index, m.index + m[0].length, 'bad'); hit = true; }); if (hit) ty.push(msg); };
+      tyScan(/\u0e40\u0e40/g, 'เเ (เ สองตัว) ควรเป็น แ');
+      tyScan(/\u0e4d\u0e32/g, 'ํา ควรเป็น ำ');
+      tyScan(/[\u0e48-\u0e4b][\u0e31\u0e34-\u0e37\u0e47]/g, 'วรรณยุกต์อยู่ก่อนสระบน');
+      tyScan(/[\u0e48-\u0e4b][\u0e48-\u0e4b]|[\u0e31\u0e34-\u0e37][\u0e31\u0e34-\u0e37]|[\u0e38-\u0e3a][\u0e38-\u0e3a]/g, 'สระ/วรรณยุกต์ซ้อนกันสองตัว');
+      tyScan(/(?:^|(?<=[^\u0e01-\u0e2e\u0e31\u0e34-\u0e3a\u0e47-\u0e4e]))[\u0e31\u0e34-\u0e3a\u0e47-\u0e4e]/gm, 'สระหรือวรรณยุกต์ลอย ไม่มีพยัญชนะ');
+      tyScan(/[\u0e40-\u0e44](?![\u0e01-\u0e2e])/g, 'สระหน้า (เ แ โ ใ ไ) ไม่มีพยัญชนะตาม');
+      tyScan(/\u0e46\s*\u0e46/g, 'ๆ ซ้ำ');
+      if (ty.length) add(k, 'typo', ty.join(' · '));
+    }
+    if (TH) { f = false; scan(/(?<=\S)ๆ|ๆ(?=\S)/g, m => { mk(m.index, m.index + 1, 'bad'); f = true; }); if (f) add(k, 'yamok', 'ๆ ต้องเว้นวรรคหน้าและหลัง'); }
     f = false; scan(/ {2,}|^ +| +$/gm, m => { mk(m.index, m.index + m[0].length, 'sp'); f = true; }); if (f) add(k, 'space', 'เว้นวรรคซ้อน หรือมีช่องว่างหัว/ท้ายบรรทัด');
     f = false; scan(/([ัิ-ฺ็-๎])\1+/g, m => { mk(m.index, m.index + m[0].length, 'bad'); f = true; }); if (f) add(k, 'dupmark', 'พิมพ์สระ/วรรณยุกต์ซ้ำ');
-    if (cfg.punct === 'strict') { f = false; scan(/[!?！？;"“”…]+|\.{2,}|[.,](?=[ \t]*$)|(?<!\d),|,(?!\d)/gm, m => { mk(m.index, m.index + m[0].length, 'bad'); f = true; }); if (f) add(k, 'punct', 'มี ! ? … , . " ; ในประโยค'); }
-    f = false; scan(/([ก-ฮ])[.…]+\s?(?=\1)/g, m => { mk(m.index, m.index + m[0].length, 'bad'); f = true; }); if (f) add(k, 'stutter', 'ตะกุกตะกักให้เขียนเป็นคำซ้ำ เช่น จะ จะ');
-    f = false; scan(/หึหึ/g, m => { mk(m.index, m.index + m[0].length, 'bad'); f = true; }); if (f) add(k, 'hehe', 'เขียนเป็น หึ ๆ');
+    if (cfg.punct === 'strict' && TH) { f = false; scan(/[!?！？;"“”…]+|\.{2,}|[.,](?=[ \t]*$)|(?<!\d),|,(?!\d)/gm, m => { mk(m.index, m.index + m[0].length, 'bad'); f = true; }); if (f) add(k, 'punct', 'มี ! ? … , . " ; ในประโยค'); }
+    if (cfg.punct === 'strict' && T === 'zh') { f = false; scan(/[，。；、,;]+|(?<!\d)\.(?!\d)/g, m => { mk(m.index, m.index + m[0].length, 'bad'); f = true; }); if (f) add(k, 'punct', 'ซับจีนไม่ใช้ ，。；、 ให้เว้นวรรคแทน'); }
+    if (T === 'en') {
+      const se = []; for (const p of L.spellEn || []) { p.rx.lastIndex = 0; let m; while ((m = p.rx.exec(t))) { mk(m.index, m.index + m[0].length, 'bad'); se.push(`${m[0]} → ${p.r}`); } }
+      if (se.length) add(k, 'spell', uniq(se).join(', '));
+      if (/\bi\b/.test(t)) add(k, 'typo', 'i ควรเป็น I');
+    }
+    if (T === 'zh') {
+      const sz = []; for (const [w, r] of L.spellZh || []) { let i = t.indexOf(w); while (i >= 0) { mk(i, i + w.length, 'bad'); sz.push(`${w} → ${r}`); i = t.indexOf(w, i + w.length); } }
+      if (sz.length) add(k, 'spell', uniq(sz).join(', '));
+    }
+    f = false; if (TH) scan(/([ก-ฮ])[.…]+\s?(?=\1)/g, m => { mk(m.index, m.index + m[0].length, 'bad'); f = true; }); if (f) add(k, 'stutter', 'ตะกุกตะกักให้เขียนเป็นคำซ้ำ เช่น จะ จะ');
+    f = false; if (TH) scan(/หึหึ/g, m => { mk(m.index, m.index + m[0].length, 'bad'); f = true; }); if (f) add(k, 'hehe', 'เขียนเป็น หึ ๆ');
 
     const cnt = rx => (t.match(rx) || []).length;
     if (cnt(/[(（]/g) !== cnt(/[)）]/g) || cnt(/[[【]/g) !== cnt(/[\]】]/g)) add(k, 'brk', 'วงเล็บเปิด-ปิดไม่ครบคู่');
@@ -377,7 +419,7 @@ function analyzeEpisode(cues, src, cfg, L, gloss, opt) {
     if (dl.some(l => /^\s*-(?=\S)/.test(l))) add(k, 'dash', 'ขีดสองคนพูดต้องตามด้วยเว้นวรรค (- ข้อความ)');
     else if (dl.length && lines.length > 1 && !dash) add(k, 'dash', 'ขีดสองคนพูดไม่ครบทุกบรรทัด');
 
-    const hits = findTagged(t, L.entries, si, L.allow);
+    const hits = TH ? findTagged(t, L.entries, si, L.allow) : [];
     let nm = 0, nf = 0;
     const per = lines.map(() => ({ m: 0, f: 0 }));
     for (const h of hits) {
@@ -400,16 +442,16 @@ function analyzeEpisode(cues, src, cfg, L, gloss, opt) {
       const st = offs[i] + (lines[i].length - lines[i].trimStart().length);
       if (t[st] === 'ๆ' || hits.some(h => h.s === st && h.part)) { add(k, 'lstart', 'บรรทัดใหม่ขึ้นต้นด้วย ๆ หรือคำลงท้าย'); break; }
     }
-    const pr = findTagged(t, L.profE, si, L.allow);
+    const pr = TH ? findTagged(t, L.profE, si, L.allow) : [];
     if (pr.length) { pr.forEach(h => mk(h.s, h.e, 'bad')); add(k, 'prof', 'คำหยาบ: ' + uniq(pr.map(h => h.w)).join(' ')); }
-    const eraE = cfg.era === 'period' ? L.periodE : cfg.era === 'modern' ? L.modernE : null;
+    const eraE = !TH ? null : cfg.era === 'period' ? L.periodE : cfg.era === 'modern' ? L.modernE : null;
     if (eraE) {
       const eh = findTagged(t, eraE, si, L.allow);
       if (eh.length) { eh.forEach(h => mk(h.s, h.e, 'era')); add(k, 'era', uniq(eh.map(h => h.r ? `${h.w} → ${h.r}` : h.w)).join(', ')); }
     }
-    const sp = findSpell(t, L.spell);
+    const sp = TH ? findSpell(t, L.spell) : [];
     if (sp.length) { sp.forEach(h => mk(h.s, h.e, 'bad')); add(k, 'spell', uniq(sp.map(h => `${h.w} → ${h.r}`)).join(', ')); }
-    if (si.ok) {
+    if (si.ok && T !== 'zh') {
       for (let i = 1; i < si.toks.length; i++) {
         const a = si.toks[i - 1], b = si.toks[i];
         if (a.w && b.w && a.t === b.t && a.t.length >= 2 && a.e === b.s) { mk(a.s, b.e, 'bad'); add(k, 'repeat', `คำซ้ำติดกัน: ${a.t}${b.t}`); break; }
@@ -417,7 +459,7 @@ function analyzeEpisode(cues, src, cfg, L, gloss, opt) {
     }
     if (lines.length === 2) {
       const [a, b] = lines;
-      if (si.ok && /[ก-๎]$/.test(a) && /^[ก-๎]/.test(b)) { const sj = segInfo(a + b); if (!sj.b.has(a.length)) add(k, 'tear', 'ตัดบรรทัดกลางคำ'); }
+      if (TH && si.ok && /[ก-๎]$/.test(a) && /^[ก-๎]/.test(b)) { const sj = segInfo(a + b); if (!sj.b.has(a.length)) add(k, 'tear', 'ตัดบรรทัดกลางคำ'); }
       if (!dash && !/[(（[【]/.test(t) && a.trim() && b.trim()) { const n = lineLen(joinLines(lines), cfg.mode); if (n <= cfg.limit) add(k, 'canjoin', `รวมเป็นบรรทัดเดียวได้ (${n}/${cfg.limit})`); }
     }
     if (/หยวน|บาท|ดอลลาร์|元|¥|\$/.test(t)) add(k, 'money', 'มีค่าเงิน เช็กกฎแปลงค่าเงินของงานนี้');
@@ -428,9 +470,9 @@ function analyzeEpisode(cues, src, cfg, L, gloss, opt) {
       else {
         if (o.src.length === 1 && owners[o.src[0]] === 1) {
           const base = baseLen(st, lang);
-          if (base >= 4) {
+          if (base >= 4 && lang !== T) {
             const r = lineLen(lines.join(''), 'se') / base;
-            const sc = lang === 'zh' || lang === 'ja' ? 1 : lang === 'ko' ? 0.6 : 0.32;
+            const sc = ((DENS[T] || 3) / (DENS[lang] || 3)) / 3;
             if (r < cfg.ratioLo * sc) add(k, 'ratio', `สั้นกว่าปกติ (${r.toFixed(2)}×) อาจแปลขาด`);
             else if (r > cfg.ratioHi * sc) add(k, 'ratio', `ยาวกว่าปกติ (${r.toFixed(2)}×) อาจแปลเกิน`);
           }
@@ -479,9 +521,21 @@ function fixText(code, t, cfg, L) {
     case 'space': return per(l => l.replace(/ {2,}/g, ' ').trim());
     case 'dupmark': return t.replace(/([ัิ-ฺ็-๎])\1+/g, '$1');
     case 'hehe': return fixText('yamok', t.replace(/หึหึ/g, 'หึ ๆ'), cfg, L);
-    case 'spell': { let s = t; const hs = findSpell(s, L.spell); for (let i = hs.length - 1; i >= 0; i--) s = s.slice(0, hs[i].s) + hs[i].r + s.slice(hs[i].e); return s; }
+    case 'spell': {
+      const T = (cfg && cfg.tgt) || 'th';
+      if (T === 'en') { let s = t; for (const p of L.spellEn || []) s = s.replace(p.rx, m => /^[A-Z]/.test(m) ? p.r[0].toUpperCase() + p.r.slice(1) : p.r); return s; }
+      if (T === 'zh') { let s = t; for (const [w, r] of L.spellZh || []) s = s.split(w).join(r); return s; }
+      let s = t; const hs = findSpell(s, L.spell); for (let i = hs.length - 1; i >= 0; i--) s = s.slice(0, hs[i].s) + hs[i].r + s.slice(hs[i].e); return s;
+    }
+    case 'typo': {
+      let s = t.replace(/[\u200b-\u200f\u2060\ufeff\u00ad]/g, '').replace(/\u0e40\u0e40/g, '\u0e41').replace(/\u0e4d\u0e32/g, '\u0e33')
+        .replace(/([\u0e48-\u0e4b])([\u0e31\u0e34-\u0e37\u0e47])/g, '$2$1').replace(/([\u0e31\u0e34-\u0e3a\u0e47-\u0e4e])\1+/g, '$1').replace(/\u0e46\s*\u0e46/g, '\u0e46');
+      if (((cfg && cfg.tgt) || 'th') === 'en') s = s.replace(/\bi\b/g, 'I');
+      return s;
+    }
     case 'canjoin': { const ls = t.split('\n'); return ls.length === 2 ? joinLines(ls) : t; }
-    case 'punct': return per(l => l.replace(/[!?！？;"“”]+/g, '').replace(/…+|\.{2,}/g, ' ').replace(/[.,]+(?=[ \t]*$)/g, '').replace(/(?<!\d),|,(?!\d)/g, ' ').replace(/ {2,}/g, ' ').trim());
+    case 'punct': if (cfg && cfg.tgt === 'zh') return per(l => l.replace(/[，。；、,;]+|(?<!\d)\.(?!\d)/g, ' ').replace(/ {2,}/g, ' ').trim());
+      return per(l => l.replace(/[!?！？;"“”]+/g, '').replace(/…+|\.{2,}/g, ' ').replace(/[.,]+(?=[ \t]*$)/g, '').replace(/(?<!\d),|,(?!\d)/g, ' ').replace(/ {2,}/g, ' ').trim());
     case 'bwidth': return cfg.bracket === 'full' ? t.replace(/\(/g, '（').replace(/\)/g, '）') : t.replace(/（/g, '(').replace(/）/g, ')');
     case 'bspace': return per(l => l.replace(/([(（[])\s+/g, '$1').replace(/\s+([)）\]])/g, '$1').replace(/^=\s+/, '=').replace(/\s+=$/, '='));
     case 'dash': return per(l => l.replace(/^(\s*)-(?=\S)/, '$1- '));
@@ -902,20 +956,29 @@ async function xlsxPatch(blob, ents, sheetPath, edits, highlight) {
   if (sp) { const i = files.findIndex(f => f.name === 'xl/styles.xml'); files[i].data = new TextEncoder().encode(sp.build()); }
   return makeZip(files);
 }
-function xlsxNew(sheetName, rows, widths) {
+function xlsxNew(sheetName, rows, widths) { return xlsxMulti([{ name: sheetName, rows, widths }]); }
+function xlsxMulti(sheets) {
   const enc = s => new TextEncoder().encode(s);
-  const nm = String(sheetName || 'Sheet1').replace(/[\[\]:*?\/\\]/g, ' ').slice(0, 31) || 'Sheet1';
-  const ncol = rows.reduce((a, r) => Math.max(a, r.length), 1);
-  const body = rows.map((r, i) => `<row r="${i + 1}">${r.map((c, j) => (c == null || (c.v === '' && !c.s)) ? '' : `<c r="${colName(j)}${i + 1}"${c.s ? ` s="${c.s}"` : ''} t="inlineStr"><is><t xml:space="preserve">${xmlEsc(String(c.v))}</t></is></c>`).join('')}</row>`).join('');
-  const cols = widths ? `<cols>${widths.map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join('')}</cols>` : '';
+  const used = new Set();
+  const names = sheets.map(sh => {
+    let nm = String(sh.name || 'Sheet1').replace(/[\[\]:*?\/\\]/g, ' ').slice(0, 31).trim() || 'Sheet1', k = 2;
+    const b = nm; while (used.has(nm.toLowerCase())) nm = (b.slice(0, 27) + ' (' + k++ + ')');
+    used.add(nm.toLowerCase()); return nm;
+  });
   const NS = 'xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"';
-  const sheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<worksheet ${NS}><sheetViews><sheetView workbookViewId="0" showGridLines="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="15"/>${cols}<sheetData>${body}</sheetData><autoFilter ref="A1:${colName(ncol - 1)}${Math.max(1, rows.length)}"/></worksheet>`;
+  const sheetXml = ({ rows, widths }) => {
+    const ncol = rows.reduce((a, r) => Math.max(a, r.length), 1);
+    const body = rows.map((r, i) => `<row r="${i + 1}">${r.map((c, j) => (c == null || (c.v === '' && !c.s)) ? '' : `<c r="${colName(j)}${i + 1}"${c.s ? ` s="${c.s}"` : ''} t="inlineStr"><is><t xml:space="preserve">${xmlEsc(String(c.v))}</t></is></c>`).join('')}</row>`).join('');
+    const cols = widths ? `<cols>${widths.map((w, i) => `<col min="${i + 1}" max="${i + 1}" width="${w}" customWidth="1"/>`).join('')}</cols>` : '';
+    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<worksheet ${NS}><sheetViews><sheetView workbookViewId="0" showGridLines="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="15"/>${cols}<sheetData>${body}</sheetData><autoFilter ref="A1:${colName(ncol - 1)}${Math.max(1, rows.length)}"/></worksheet>`;
+  };
   const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="10"/><name val="Tahoma"/></font><font><b/><sz val="10"/><color rgb="FFFFFFFF"/><name val="Tahoma"/></font></fonts><fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF7B6BB5"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFFF00"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="3"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf><xf numFmtId="0" fontId="0" fillId="3" borderId="0" xfId="0" applyFill="1" applyAlignment="1"><alignment vertical="top" wrapText="1"/></xf></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
-  const wbx = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<workbook ${NS}><sheets><sheet name="${xmlEsc(nm)}" sheetId="1" r:id="rId1"/></sheets></workbook>`;
-  const ct = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`;
+  const wbx = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<workbook ${NS}><sheets>${names.map((n, i) => `<sheet name="${xmlEsc(n)}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join('')}</sheets></workbook>`;
+  const ct = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>${names.map((n, i) => `<Override PartName="/xl/worksheets/sheet${i + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')}<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`;
   const rels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`;
-  const wrels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`;
-  return makeZip([{ name: '[Content_Types].xml', data: enc(ct) }, { name: '_rels/.rels', data: enc(rels) }, { name: 'xl/workbook.xml', data: enc(wbx) }, { name: 'xl/_rels/workbook.xml.rels', data: enc(wrels) }, { name: 'xl/styles.xml', data: enc(styles) }, { name: 'xl/worksheets/sheet1.xml', data: enc(sheet) }]);
+  const wrels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${names.map((n, i) => `<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join('')}<Relationship Id="rId${names.length + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`;
+  return makeZip([{ name: '[Content_Types].xml', data: enc(ct) }, { name: '_rels/.rels', data: enc(rels) }, { name: 'xl/workbook.xml', data: enc(wbx) }, { name: 'xl/_rels/workbook.xml.rels', data: enc(wrels) }, { name: 'xl/styles.xml', data: enc(styles) }]
+    .concat(sheets.map((sh, i) => ({ name: `xl/worksheets/sheet${i + 1}.xml`, data: enc(sheetXml(sh)) }))));
 }
 
 /* ---------- names ---------- */
@@ -946,7 +1009,7 @@ function fnv(s) { let h = 0x811c9dc5; for (let i = 0; i < s.length; i++) { h ^= 
 return { p2, toMs, fmt, fmtAss, decode, parseSrt, buildSrt, parseAss, buildAss, encodeFile, seLen, lineLen, scriptOf, LANG_LABEL, segInfo,
   DEF_LEX, compileLex, CAT, FIXABLE, PRESETS, DEF_CFG, analyzeEpisode, fixText, autoBreak, joinLines, glossCompile,
   swapGender, dropParticles, audioPeaks, pitchTrack, voiceOf, colName, xlsxBook, guessMap, sheetToEps, cellTime, xlsxPatch, xlsxNew,
-  crc32, makeZip, zipList, zipRead, xlsxRows, textRows, glossFromRows, normName, epInfo, baseOf, fnv };
+  crc32, makeZip, zipList, zipRead, xlsxRows, textRows, glossFromRows, normName, epInfo, baseOf, fnv, xlsxMulti, presetsFor, cfgForTarget, TGT_NAME, stripTags };
 })();
 window.SubCore = SubCore;
 export default SubCore;

@@ -1,10 +1,13 @@
+import * as AIX from './ai.js';
+import * as PDB from './projdb.js';
 (() => {
 'use strict';
 const C = window.SubCore;
 const { toMs, fmt, fmtAss, decode, parseSrt, parseAss, buildSrt, encodeFile, lineLen, scriptOf, LANG_LABEL, compileLex, CAT, FIXABLE, PRESETS, DEF_CFG, DEF_LEX,
   analyzeEpisode, fixText, autoBreak, joinLines, glossCompile, makeZip, zipList, zipRead, xlsxBook, guessMap, sheetToEps, xlsxPatch, xlsxNew, colName,
-  textRows, glossFromRows, epInfo, baseOf, fnv, p2, swapGender, dropParticles, audioPeaks, pitchTrack } = C;
+  textRows, glossFromRows, epInfo, baseOf, fnv, p2, swapGender, dropParticles, audioPeaks, pitchTrack, xlsxMulti, presetsFor, cfgForTarget, TGT_NAME, xlsxRows } = C;
 const $ = id => document.getElementById(id);
+const waveSize = { w: 0, h: 0 };
 const video = $('video'), stage = $('stage'), cap = $('cap'), ph = $('ph'), list = $('list'), ta = $('ta'), clock = $('clock');
 
 /* ---------- storage ---------- */
@@ -14,7 +17,7 @@ const store = {
   set(k, v) { try { localStorage.setItem(LS + k, JSON.stringify(v)); } catch (e) {} },
   del(k) { try { localStorage.removeItem(LS + k); } catch (e) {} }
 };
-const LEXVER = 3;
+const LEXVER = 4;
 const AI_RULES = `- แปลให้ครบความหมาย ห้ามแปลขาด ห้ามแปลเกิน ห้ามเติมความหมายที่ต้นฉบับไม่มี ประโยคบอกเล่าห้ามกลายเป็นคำถาม
 - ภาษาพูดธรรมชาติ กระชับ ไม่แข็งเหมือนเครื่องแปล คำพูดธรรมชาติที่ถูกอยู่แล้วไม่ต้องแก้
 - ใส่หางเสียงเท่าที่จำเป็น ห้ามลงท้ายด้วยหางเสียงเดิมติดกันหลายคิว
@@ -24,33 +27,74 @@ const AI_RULES = `- แปลให้ครบความหมาย ห้�
 - 画面字 เสียงในใจ เสียงโทรศัพท์ ใส่วงเล็บ ( ) เฉพาะเมื่อต้นฉบับมีวงเล็บ ถ้าต้นฉบับไม่มีวงเล็บห้ามเติมเอง
 - เรื่องปัจจุบัน: ผู้หญิงใช้ ฉัน (หนู เฉพาะพูดกับพ่อแม่หรือญาติผู้ใหญ่) ผู้ชายใช้ ผม
 - ค่าเงิน: ทำตามกฎของงานนี้ (แก้บรรทัดนี้ได้ เช่น ห้ามแปลงค่าเงิน / หยวน×10 = บาท)`;
+const AI_RULES_ZH = `- แปลให้ครบความหมาย ห้ามแปลขาด ห้ามแปลเกิน ห้ามเติมความหมายที่ต้นฉบับไม่มี
+- ภาษาจีนตัวย่อแบบพูดธรรมชาติ สำนวนซับละครจีน กระชับ
+- ห้ามใช้ ，。；、 ในซับ ระหว่างวลีให้เว้นวรรค (？！ และ …… ใช้ตามกฎลูกค้า)
+- ชื่อตัวละครและศัพท์ใน术语表ต้องใช้ตามนั้น ชื่อที่ไม่มีในตารางให้ถอดเสียงเป็นจีนให้เหมือนกันทั้งเรื่อง
+- 画面字 เสียงในใจ เสียงโทรศัพท์ ใส่วงเล็บ（）เฉพาะเมื่อต้นฉบับมีวงเล็บ
+- ตัวเลขใช้เลขอารบิก ค่าเงินทำตามกฎของงานนี้`;
+const AI_RULES_EN = `- แปลให้ครบความหมาย ห้ามแปลขาด ห้ามแปลเกิน
+- ภาษาอังกฤษพูดธรรมชาติ กระชับแบบซับไตเติ้ล ขึ้นต้นประโยคด้วยตัวพิมพ์ใหญ่ ใช้เครื่องหมายวรรคตอนตามปกติ
+- ชื่อตัวละครและศัพท์ใน术语表ต้องใช้ตามนั้น ชื่อที่ไม่มีในตารางให้ถอดเสียงแบบเดียวกันทั้งเรื่อง (ชื่อจีนใช้พินอินไม่มีวรรณยุกต์)
+- คำเรียกญาติหรือตำแหน่งแปลเป็นอังกฤษที่เป็นธรรมชาติ
+- 画面字 ใส่วงเล็บ [ ] หรือ ( ) ตามกฎลูกค้า เฉพาะเมื่อต้นฉบับมีวงเล็บ`;
+const defaultRules = tgt => tgt === 'zh' ? AI_RULES_ZH : tgt === 'en' ? AI_RULES_EN : AI_RULES;
+
+/* ---------- projects: each one keeps its own files, edits, 术语表, criteria, rules and client ---------- */
+const PJ = (() => {
+  let p = store.get('projects', null);
+  if (!p || !Array.isArray(p.list) || !p.list.length) {
+    const id = 'p' + Date.now().toString(36);
+    p = { cur: id, list: [{ id, name: 'โปรเจกต์แรก', src: 'auto', tgt: 'th', client: '', created: Date.now(), updated: Date.now(), eps: 0 }] };
+    try {
+      const mv = [];
+      for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && (k.startsWith(LS + 'draft3:') || k.startsWith(LS + 'done:'))) mv.push(k); }
+      for (const k of mv) { localStorage.setItem(LS + 'p:' + id + ':' + k.slice(LS.length), localStorage.getItem(k)); localStorage.removeItem(k); }
+      const g = localStorage.getItem(LS + 'gloss'); if (g) localStorage.setItem(LS + 'p:' + id + ':gloss', g);
+      const st = store.get('settings2', null);
+      if (st && st.cfg) store.set('p:' + id + ':cfg', st.cfg);
+      if (st && st.view && st.view.aiRules) store.set('p:' + id + ':aiRules', st.view.aiRules);
+    } catch (e) {}
+    store.set('projects', p);
+  }
+  if (!p.list.some(x => x.id === p.cur)) p.cur = p.list[0].id;
+  return p;
+})();
+const saveProjects = () => store.set('projects', PJ);
+const pk = k => 'p:' + S.pid + ':' + k;
+const curProj = () => PJ.list.find(x => x.id === S.pid) || PJ.list[0];
 const old = store.get('settings', {}) || {};
 const saved = store.get('settings2', null) || {};
 const VIEW_DEF = { autoNext: true, follow: true, overlay: true, ovColor: true, subPos: 8, rate: 1, left: null, showSrc: true, clickPlay: true, wspan: 8, aiRules: AI_RULES, aiTier: 'default' };
 const S = {
+  pid: PJ.cur,
   view: Object.assign({}, VIEW_DEF, saved.view || {}),
-  cfg: Object.assign({}, DEF_CFG, saved.cfg || {}),
+  cfg: Object.assign({}, DEF_CFG, store.get('p:' + PJ.cur + ':cfg', null) || saved.cfg || {}),
   lexSrc: Object.assign({}, DEF_LEX, saved.lex || {}),
   eps: [], srcs: [], videos: [], books: [], sel: null, cur: -1, playIdx: -1, stopAt: null, lockTime: true, multi: new Set(), anchor: null,
   query: '', regex: false, cs: false, onlyMatch: true, filter: 'all', folder: '', drafts: null, qv: 1,
-  gloss: [], glossName: '', audio: new Map()
+  gloss: [], glossName: '', audio: new Map(), restoring: false
 };
+{ const pr = PJ.list.find(x => x.id === PJ.cur); S.cfg.tgt = pr.tgt || 'th'; S.cfg.src = pr.src || 'auto'; }
+S.aiRules = store.get('p:' + PJ.cur + ':aiRules', null) || defaultRules(S.cfg.tgt);
 if (!saved.view) for (const k of ['autoNext', 'follow', 'overlay', 'subPos', 'rate', 'left']) if (old[k] !== undefined) S.view[k] = old[k];
 if (saved.lex && saved.lexVer !== LEXVER) {
   const W = s => String(s || '').split(/[\s,，、]+/).filter(Boolean);
   const P = s => String(s || '').split('\n').map(l => l.trim()).filter(Boolean);
   for (const k of Object.keys(DEF_LEX)) {
-    if (['period', 'modern', 'spell'].includes(k)) {
+    if (['period', 'modern', 'spell', 'spellEn', 'spellZh'].includes(k)) {
       const have = new Set(P(S.lexSrc[k]).map(l => l.split(/\s*(?:>|→)\s*/)[0]));
       S.lexSrc[k] = P(S.lexSrc[k]).concat(P(DEF_LEX[k]).filter(l => !have.has(l.split(/\s*(?:>|→)\s*/)[0]))).join('\n');
     } else S.lexSrc[k] = [...new Set(W(S.lexSrc[k]).concat(W(DEF_LEX[k])))].join(' ');
   }
 }
 S.L = compileLex(S.lexSrc);
-const gsaved = store.get('gloss', null);
+const gsaved = store.get('p:' + PJ.cur + ':gloss', null);
 if (gsaved && Array.isArray(gsaved.list)) { S.gloss = gsaved.list; S.glossName = gsaved.name || ''; }
 S.G = glossCompile(S.gloss);
-const saveSettings = () => store.set('settings2', { view: S.view, cfg: S.cfg, lex: S.lexSrc, lexVer: LEXVER });
+const saveSettings = () => { store.set('settings2', { view: S.view, lex: S.lexSrc, lexVer: LEXVER }); store.set(pk('cfg'), S.cfg); store.set(pk('aiRules'), S.aiRules); };
+const tgtLang = () => S.cfg.tgt || 'th';
+const TGT_LABEL = () => TGT_NAME[tgtLang()] || 'ไทย';
 const uiSaved = store.get('ui', null);
 if (uiSaved === 'day' || uiSaved === 'night') document.documentElement.dataset.ui = uiSaved;
 saveSettings();
@@ -60,7 +104,7 @@ const esc = s => String(s).replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;'
 const nat = (a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
 const isEdited = c => c.t !== c.oT || c.s !== c.oS || c.e !== c.oE;
 const epEdited = ep => !!ep.struct || !!ep.gen || ep.cues.some(isEdited);
-const doneKey = ep => 'done:' + ep.name + ':' + ep.hash;
+const doneKey = ep => pk('done:' + ep.name + ':' + ep.hash);
 const isDone = ep => !ep.sample && !!store.get(doneKey(ep), false);
 const realEps = () => S.eps.filter(e => !e.sample);
 const epVideo = ei => { const ep = S.eps[ei]; return ep && ep.video != null ? S.videos[ep.video] : null; };
@@ -194,7 +238,7 @@ const SAMPLE = [
 你真的没骗我？
 `]
 ];
-const WELCOME = `<div class="ph-in"><strong>ลากไฟล์ทั้งหมดมาวางตรงไหนก็ได้</strong><span>ซับไทย ซับต้นฉบับ (จีน อังกฤษ ภาษาไหนก็ได้) วิดีโอ zip rar Excel 中泰对照 หรือ术语表 ระบบแยกให้เองและจับคู่ตามเลขตอน</span><div class="ph-btns"><button class="btn primary" type="button" data-act="dir">เปิดโฟลเดอร์</button><button class="btn" type="button" data-act="files">เลือกไฟล์</button></div><span class="fine">ไฟล์เปิดในเครื่องเธอเท่านั้น ไม่มีการอัปโหลด<br>เล่นได้แน่นอนคือ MP4 (H.264) · รายการด้านขวาตอนนี้เป็นซับตัวอย่าง</span></div>`;
+const WELCOME = `<div class="ph-in"><strong>ลากไฟล์ทั้งหมดมาวางตรงไหนก็ได้</strong><span>ไฟล์คำแปล ซับต้นฉบับ วิดีโอ zip rar Excel 对照表 หรือ术语表 ระบบแยกให้เองตามคู่ภาษาของโปรเจกต์ และจับคู่ตามเลขตอน</span><div class="ph-btns"><button class="btn primary" type="button" data-act="dir">เปิดโฟลเดอร์</button><button class="btn" type="button" data-act="files">เลือกไฟล์</button></div><span class="fine">ไฟล์เปิดในเครื่องเธอเท่านั้น ไม่มีการอัปโหลด<br>เล่นได้แน่นอนคือ MP4 (H.264) · รายการด้านขวาตอนนี้เป็นซับตัวอย่าง</span></div>`;
 function phFor(ei) {
   const ep = S.eps[ei];
   if (!ep || ep.sample || !realEps().length) return WELCOME;
@@ -300,8 +344,8 @@ function renderList() {
       if (!passFilter(ep, ep.cues[ci], re)) continue;
       const h = rowHtml(ei, ci, re); rowCache.set(`r-${ei}-${ci}`, h); rows += h; n++;
     }
-    if (n) html += headHtml(ei) + rows;
-    else if (!re && S.filter === 'all') html += headHtml(ei) + '<div class="none">ไฟล์นี้ไม่มีคิวซับ</div>';
+    if (n) html += `<div class="epb" id="b-${ei}" style="contain-intrinsic-size:auto ${n * 52 + 36}px">` + headHtml(ei) + rows + '</div>';
+    else if (!re && S.filter === 'all') html += `<div class="epb" id="b-${ei}">` + headHtml(ei) + '<div class="none">ไฟล์นี้ไม่มีคิวซับ</div></div>';
   });
   if (!html) html = `<div class="none">ไม่มีคิวที่ตรงกับตัวกรองนี้</div>`;
   list.innerHTML = html;
@@ -330,13 +374,13 @@ function updateFindInfo(rawRe) {
 function refreshHead(ei) { const h = $('h-' + ei); if (h && S.eps[ei]) h.outerHTML = headHtml(ei); }
 function setRowClass(ei, ci, cls, on) { const el = $(`r-${ei}-${ci}`); if (el) el.classList.toggle(cls, on); }
 function syncMulti() { list.querySelectorAll('.row.msel').forEach(r => r.classList.remove('msel')); for (const k of S.multi) { const [e, c] = k.split(':'); setRowClass(+e, +c, 'msel', true); } }
+const topIn = el => { let t = 0, x = el; while (x && x !== list && list.contains(x)) { t += x.offsetTop; x = x.offsetParent; } return t; };
 function scrollToEl(el, center) {
   if (!el) return;
-  const lr = list.getBoundingClientRect(), r = el.getBoundingClientRect();
-  const top = r.top - lr.top + list.scrollTop, head = 34;
-  if (center) { list.scrollTop = top - list.clientHeight / 2 + r.height / 2; return; }
-  if (r.top < lr.top + head) list.scrollTop = top - head;
-  else if (r.bottom > lr.bottom) list.scrollTop = top - list.clientHeight + r.height;
+  const top = topIn(el), h = el.offsetHeight, st = list.scrollTop, ch = list.clientHeight, head = 34;
+  if (center) { list.scrollTop = top - ch / 2 + h / 2; return; }
+  if (top < st + head) list.scrollTop = top - head;
+  else if (top + h > st + ch) list.scrollTop = top - ch + h;
 }
 const scrollRow = (ei, ci, center) => scrollToEl($(`r-${ei}-${ci}`), center);
 function progressPill() {
@@ -362,7 +406,9 @@ function renderStats() {
     let n = 0, o = 0, e = 0, p = 0;
     for (const ep of S.eps) for (const c of ep.cues) { n++; if (Q(c).ov) o++; if (isEdited(c)) e++; if (hasSev(c, ['e', 'w'])) p++; }
     const sample = S.eps.some(x => x.sample);
-    $('stats').innerHTML = `<span class="pill">${sample ? 'ตัวอย่าง · ' : ''}${S.eps.length} ตอน · ${n.toLocaleString('en')} คิว</span><button class="pill warn" type="button" data-f="issues"${p ? '' : ' disabled'}>มีปัญหา ${p}</button><button class="pill warn" type="button" data-f="over"${o ? '' : ' disabled'}>เกินลิมิต ${o}</button><button class="pill edit" type="button" data-f="edited"${e ? '' : ' disabled'}>แก้แล้ว ${e}</button>${sample ? '' : progressPill()}`;
+    $('stats').innerHTML = `<span class="pill">${sample ? 'ตัวอย่าง · ' : ''}${S.eps.length} ตอน · ${n.toLocaleString('en')} คิว</span>${sample ? '' : progressPill()}`;
+    const cnt = (f, v, cls) => { const b = document.querySelector(`#filt button[data-f="${f}"]`); if (!b) return; let c = b.querySelector('.cnt'); if (!c) { c = document.createElement('b'); b.appendChild(document.createTextNode(' ')); b.appendChild(c); } c.className = 'cnt' + (v ? ' ' + cls : ''); c.textContent = v.toLocaleString('en'); };
+    cnt('issues', p, 'bad'); cnt('over', o, 'bad'); cnt('edited', e, 'ed');
   });
 }
 function renderJump() {
@@ -388,6 +434,7 @@ function loadEditor() {
   const c = curCue(), has = !!c;
   ta.disabled = !has;
   ['bPrevL', 'bNextL', 'bPlayL', 'bRevert', 'bBreak', 'bJoin', 'bToM', 'bToF', 'bDropP'].forEach(id => { $(id).disabled = !has; });
+  ta.spellcheck = tgtLang() === 'en'; ta.lang = tgtLang();
   if (!has) {
     $('edWhere').textContent = '—'; ta.value = ''; $('inS').value = ''; $('inE').value = ''; $('dur').textContent = '';
     $('edCt').innerHTML = ''; $('edPills').innerHTML = ''; $('edIss').innerHTML = ''; $('edSrc').hidden = true; paintBack(); applyLock(); return;
@@ -419,7 +466,7 @@ function edIssues() {
   if (!c) { $('edIss').innerHTML = ''; return; }
   const q = Q(c);
   $('edIss').innerHTML = q.iss.map(x => {
-    let btn = FIXABLE.has(x.code) ? `<button type="button" data-fix="${x.code}">แก้</button>` : '';
+    let btn = FIXABLE.has(x.code) && fixText(x.code, c.t, S.cfg, S.L) !== c.t ? `<button type="button" data-fix="${x.code}">แก้</button>` : '';
     if (x.code === 'vgender' && q.vg) btn = `<button type="button" data-swap="${q.vg}">เปลี่ยนเป็น${q.vg === 'm' ? 'ผู้ชาย' : 'ผู้หญิง'}</button>`;
     return `<span class="iss ${x.sev}" title="${SEVLAB[x.sev]}">${esc(x.msg)}${btn}</span>`;
   }).join('');
@@ -437,6 +484,7 @@ function applyLock() {
   const noStruct = L || !ep;
   ['bSplit', 'bMerge', 'bIns', 'bDel'].forEach(id => { $(id).disabled = noStruct; $(id).title = xl ? 'ไฟล์ Excel แก้ได้เฉพาะข้อความ' : S.lockTime ? 'ปลดล็อกเวลาก่อน' : ''; });
   $('tLock').setAttribute('aria-pressed', String(S.lockTime));
+  $('editor').classList.toggle('locked', !!S.lockTime);
   $('tLock').textContent = S.lockTime ? 'ล็อกเวลาอยู่' : 'แก้เวลาได้';
 }
 ta.addEventListener('input', () => {
@@ -603,7 +651,7 @@ $('bDel').onclick = () => {
 
 /* ---------- selection & navigation ---------- */
 function select(ei, ci, o = {}) {
-  const { seek = true, scroll = true, play = null, center = false } = o;
+  const { seek = true, scroll = true, play = null, center = false, wave = true } = o;
   const ep = S.eps[ei];
   if (!ep || !ep.cues[ci]) return;
   if (S.sel) setRowClass(S.sel.e, S.sel.c, 'sel', false);
@@ -612,12 +660,22 @@ function select(ei, ci, o = {}) {
   loadEditor();
   if (seek) { S.stopAt = null; seekTo(ei, (ep.cues[ci].sm + 2) / 1000, play === null ? false : play); }
   if (scroll) scrollRow(ei, ci, center);
-  $('epJump').value = ei;
-  drawWave();
+  if ($('epJump').value !== String(ei)) $('epJump').value = ei;
+  if (wave || video.paused) drawWave();
+}
+function nextRowEl(n, d) {
+  for (let x = n; ;) {
+    x = d > 0 ? x.nextElementSibling : x.previousElementSibling;
+    if (x && x.classList.contains('row')) return x;
+    if (!x) {
+      let b = n.closest('.epb');
+      for (;;) { b = b && (d > 0 ? b.nextElementSibling : b.previousElementSibling); if (!b) return null; const rs = b.querySelectorAll('.row'); if (rs.length) return d > 0 ? rs[0] : rs[rs.length - 1]; }
+    }
+  }
 }
 function moveSel(d) {
   let n = S.sel ? $(`r-${S.sel.e}-${S.sel.c}`) : null;
-  if (n) { do { n = d > 0 ? n.nextElementSibling : n.previousElementSibling; } while (n && !n.classList.contains('row')); }
+  if (n) n = nextRowEl(n, d);
   else { const rows = list.querySelectorAll('.row'); n = rows.length ? (d > 0 ? rows[0] : rows[rows.length - 1]) : null; }
   if (n) { S.multi.clear(); syncMulti(); select(+n.dataset.e, +n.dataset.c); }
 }
@@ -704,15 +762,31 @@ function playCue() {
 }
 function nudge(sec) { if (!epVideo(S.cur)) return; S.stopAt = null; video.currentTime = Math.max(0, video.currentTime + sec); }
 function updateTransport() { $('bPlay').textContent = video.paused ? 'เล่น' : 'หยุด'; }
-function updateClock() {
+let clockAt = 0;
+function updateClock(force) {
+  if (!force && !video.paused) { const now = performance.now(); if (now - clockAt < 200) return; clockAt = now; }
   const ep = S.eps[S.cur];
   if (!ep) { clock.textContent = '--'; return; }
   if (!epVideo(S.cur)) { clock.textContent = ep.label; return; }
   const d = isFinite(video.duration) ? video.duration * 1000 : 0;
   clock.textContent = `${ep.label} · ${fmt(video.currentTime * 1000)}${d ? ' / ' + fmt(d).slice(0, 8) : ''}`;
 }
-function activeIdxs(ep, t) { const out = []; ep.cues.forEach((c, i) => { if (t >= c.sm && t < c.em) out.push(i); }); return out; }
+function activeIdxs(ep, t) { const out = []; const cs = ep.cues; for (let i = 0; i < cs.length; i++) { const c = cs[i]; if (t >= c.sm && t < c.em) out.push(i); } return out; }
 let actives = [];
+/* While the video plays, a cue change only swaps a row class and the overlay inside the frame; moving the selection,
+   the editor and the list scroll happen right after, once per change (and only the last one if several land at once). */
+let followJob = 0, followTo = -1;
+function queueFollow(ei, ci) {
+  followTo = ci;
+  if (followJob) return;
+  const fast = video.playbackRate >= 1.75;
+  followJob = setTimeout(() => {
+    followJob = 0;
+    if (S.cur !== ei || followTo < 0 || !S.eps[ei] || !S.eps[ei].cues[followTo]) return;
+    if (document.activeElement !== ta) select(ei, followTo, { seek: false, wave: false });
+    else scrollRow(ei, followTo);
+  }, fast ? 160 : 0);
+}
 function tick() {
   const ep = S.eps[S.cur];
   if (S.stopAt != null && video.currentTime >= S.stopAt) { video.pause(); S.stopAt = null; }
@@ -723,10 +797,7 @@ function tick() {
     S.playIdx = ai;
     if (ai >= 0) {
       setRowClass(S.cur, ai, 'play', true);
-      if (S.view.follow && !video.paused && S.stopAt == null) {
-        if (document.activeElement !== ta) select(S.cur, ai, { seek: false });
-        else scrollRow(S.cur, ai);
-      }
+      if (S.view.follow && !video.paused && S.stopAt == null) queueFollow(S.cur, ai);
     }
   }
   renderOverlay();
@@ -774,6 +845,7 @@ function renderOverlay(force) {
   const k = items.map(c => c.t).join('\u0001') + '|' + S.view.ovColor;
   if (!force && k === lastCap) return;
   lastCap = k;
+  if (!items.length) { if (!cap.hidden) cap.hidden = true; return; }
   cap.innerHTML = items.map(capFor).join('\n');
   cap.hidden = !items.length || !ph.hidden;
 }
@@ -786,7 +858,7 @@ function layoutOverlay() {
   o.style.setProperty('--fs', Math.max(12, Math.min(w * 0.055, h * 0.05)).toFixed(1) + 'px');
   drawWave();
 }
-if ('ResizeObserver' in window) { new ResizeObserver(layoutOverlay).observe(stage); new ResizeObserver(() => drawWave()).observe($('wave')); }
+if ('ResizeObserver' in window) { new ResizeObserver(layoutOverlay).observe(stage); new ResizeObserver(en => { const r = en[0].contentRect; waveSize.w = Math.round(r.width); waveSize.h = Math.round(r.height); drawWave(); }).observe($('wv')); }
 else window.addEventListener('resize', layoutOverlay);
 
 /* ---------- audio: waveform + pitch ---------- */
@@ -822,7 +894,8 @@ function wcol() {
 }
 function drawWave() {
   const cv = $('wv'); if (!cv) return;
-  const W = cv.clientWidth, H = cv.clientHeight, dpr = window.devicePixelRatio || 1;
+  if (!waveSize.w) { waveSize.w = cv.clientWidth; waveSize.h = cv.clientHeight; }
+  const W = waveSize.w, H = waveSize.h, dpr = window.devicePixelRatio || 1;
   if (!W || !H) return;
   if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(H * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); }
   const g = cv.getContext('2d'), K = wcol();
@@ -921,7 +994,7 @@ $('wvIn').onclick = () => zoomWave(0.8);
 $('wvOut').onclick = () => zoomWave(1.25);
 
 /* ---------- drafts (autosave in this browser) ---------- */
-const draftKey = ep => 'draft3:' + ep.name + ':' + ep.hash;
+const draftKey = ep => pk('draft3:' + ep.name + ':' + ep.hash);
 const dq = new Set(); let dqT = 0;
 function queueDraft(ep) { if (!ep || ep.sample) return; dq.add(ep); setSaveState('dirty'); clearTimeout(dqT); dqT = setTimeout(flushDrafts, 700); }
 let saveAt = 0, saveMode = 'none';
@@ -941,6 +1014,7 @@ function saveNow(manual) {
   const ok = flushDrafts();
   if (ok === false) { setSaveState('error'); if (manual) toast('บันทึกไม่ได้ พื้นที่เก็บในเครื่องอาจเต็ม ให้ส่งออกไฟล์ด้วย Ctrl+E ไว้ก่อน'); return; }
   setSaveState(realEps().length ? 'saved' : 'none');
+  if (realEps().length) touchProj();
   if (manual) toast(realEps().length ? `บันทึกแล้ว ${new Date().toTimeString().slice(0, 5)} · เก็บไว้ในเครื่องนี้ ปิดแล้วเปิดใหม่กู้คืนได้ · ส่งไฟล์ให้ลูกค้ากด Ctrl+E` : 'ยังไม่มีงานให้บันทึก');
 }
 function flushDrafts() {
@@ -961,21 +1035,23 @@ function checkDrafts() {
     if (d && Array.isArray(d.cues)) found.push([ep, d]);
   }
   S.drafts = found.length ? found : null;
+  if (S.drafts && S.restoring) { applyDrafts(); return; }
   renderDraftBar();
+}
+function applyDrafts() {
+  for (const [ep, d] of S.drafts) { ep.cues = d.cues.map(o => Object.assign({}, o, { sm: toMs(o.s), em: toMs(o.e) })); ep.struct = !!d.struct; ep.dirty = true; }
+  S.drafts = null; renderDraftBar(); if (S.sel && !curCue()) S.sel = null;
 }
 function renderDraftBar() {
   const bar = $('draftBar');
   if (!S.drafts) { bar.hidden = true; return; }
   bar.innerHTML = `<span>เจองานที่แก้ค้างไว้ในเครื่องนี้ ${S.drafts.length} ตอน</span><button class="btn sm primary" type="button" id="dRestore">กู้คืน</button><button class="btn sm" type="button" id="dDrop">ทิ้ง</button>`;
   bar.hidden = false;
-  $('dRestore').onclick = () => {
-    for (const [ep, d] of S.drafts) { ep.cues = d.cues.map(o => Object.assign({}, o, { sm: toMs(o.s), em: toMs(o.e) })); ep.struct = !!d.struct; ep.dirty = true; }
-    S.drafts = null; renderDraftBar(); if (S.sel && !curCue()) S.sel = null; renderAll(); toast('กู้คืนงานที่แก้ค้างไว้แล้ว');
-  };
+  $('dRestore').onclick = () => { applyDrafts(); renderAll(); toast('กู้คืนงานที่แก้ค้างไว้แล้ว'); };
   $('dDrop').onclick = () => { for (const [ep] of S.drafts) store.del(draftKey(ep)); S.drafts = null; renderDraftBar(); };
 }
 window.addEventListener('pagehide', flushDrafts);
-window.addEventListener('beforeunload', e => { flushDrafts(); if (realEps().some(epEdited)) { e.preventDefault(); e.returnValue = ''; } });
+window.addEventListener('beforeunload', e => { flushDrafts(); touchProj(); if (!(window.HF_PLATFORM && window.HF_PLATFORM.desktop) && realEps().some(epEdited)) { e.preventDefault(); e.returnValue = ''; } });
 
 /* ---------- loading files ---------- */
 const VEXT = new Set(['mp4', 'm4v', 'mov', 'webm', 'mkv', 'ts', 'm2ts', 'avi', 'flv', 'wmv', 'mpg', 'mpeg', '3gp']);
@@ -1048,7 +1124,8 @@ function pairInto(field, pool, allowed) {
 }
 function autoPair() {
   pairInto('video', S.videos);
-  const zh = new Set(S.srcs.map((s, i) => s.lang === 'zh' && !s.sample && !s.fixed ? i : -1).filter(i => i >= 0));
+  const want = S.cfg.src && S.cfg.src !== 'auto' ? S.cfg.src : 'zh';
+  const zh = new Set(S.srcs.map((s, i) => s.lang === want && !s.sample && !s.fixed ? i : -1).filter(i => i >= 0));
   if (zh.size) pairInto('src', S.srcs, zh);
   pairInto('src', S.srcs, new Set(S.srcs.map((s, i) => s.sample || s.fixed ? -1 : i).filter(i => i >= 0)));
 }
@@ -1069,6 +1146,7 @@ async function addFiles(files, folder) {
   if (gloss.length) await loadGlossFiles(gloss, !subs.length && !vids.length && !books.length);
   if (!subs.length && !vids.length && !books.length) { if (!gloss.length) toast(notes[0] || (other.length ? 'ยังไม่รองรับไฟล์แบบนี้ (รับ srt / ass / zip / rar / วิดีโอ / xlsx)' : 'ไม่เจอไฟล์ซับหรือวิดีโอ')); return; }
   flushDrafts();
+  if (folder && !S.restoring) { const pr = curProj(); if (!pr.folder) { pr.folder = folder; saveProjects(); } }
   if (folder && (!S.folder || !realEps().length)) S.folder = folder;
   const parsed = [];
   for (const f of subs) {
@@ -1076,7 +1154,12 @@ async function addFiles(files, folder) {
     const d = decode(buf);
     const cues = /\.(ass|ssa)$/i.test(f.name) ? parseAss(d.text).cues : parseSrt(d.text);
     const txt = cues.map(c => c.t).join(' ').replace(/\{\\[^}]*\}/g, '');
-    parsed.push({ f, buf, d, target: scriptOf(txt) === 'th' });
+    parsed.push({ f, buf, d, target: scriptOf(txt) === tgtLang() });
+  }
+  if (!S.restoring) {
+    const recs = parsed.map(p => ({ name: p.f.name, kind: 'sub', bytes: p.buf })).concat(await Promise.all(books.map(async b => ({ name: b.name, kind: 'book', bytes: await b.arrayBuffer() }))));
+    persistFiles(recs);
+    if (vids.length) { const pr = curProj(); pr.videos = [...new Set((pr.videos || []).concat(vids.map(v => v.name)))].slice(-400); saveProjects(); }
   }
   const before = snapshotSel();
   if (parsed.some(p => p.target)) dropSamples();
@@ -1128,27 +1211,37 @@ function finishLoad(before, info) {
   if (info.other && info.other.length) msg += ` · ข้ามไฟล์อื่น ${info.other.length} ไฟล์`;
   if (info.notes && info.notes.length) msg += ' · ' + info.notes.join(' · ');
   const unpairedSrc = S.srcs.filter((s, i) => !s.sample && !S.eps.some(e => e.src === i)).length;
-  if (unpairedSrc && (!real.length || info.nS)) toast(msg + ` · มี原文 ${unpairedSrc} ไฟล์ที่ยังไม่มีไฟล์แปล`, { label: 'สร้างไฟล์แปลไทย', fn: makeThaiFromSrc });
+  if (S.restoring) toast(`เปิดโปรเจกต์ ${curProj().name}: ${real.length} ตอน${S.videos.length ? '' : ' · ลากวิดีโอมาวางอีกครั้งถ้าต้องการดูภาพ'}`);
+  else if (unpairedSrc && (!real.length || info.nS)) toast(msg + ` · มี原文 ${unpairedSrc} ไฟล์ที่ยังไม่มีไฟล์แปล`, { label: 'สร้างไฟล์แปลเปล่า', fn: makeThaiFromSrc });
   else toast(msg);
   const usedV = new Set(real.map(e => e.video).filter(v => v != null)).size, usedS = new Set(real.map(e => e.src).filter(v => v != null)).size;
-  if (real.length && !xlsxQueue.length && ((pv < real.length && S.videos.length > usedV) || (ps < real.length && S.srcs.length > usedS && !real.every(e => e.kind === 'xlsx')))) openPair();
+  if (real.length && !S.restoring && !xlsxQueue.length && ((pv < real.length && S.videos.length > usedV) || (ps < real.length && S.srcs.length > usedS && !real.every(e => e.kind === 'xlsx')))) openPair();
+}
+const GEN_SUF = { th: '_泰文.srt', zh: '_中文.srt', en: '_英文.srt' };
+function makeGenEp(i) {
+    const s = S.srcs[i];
+    const base = s.name.replace(/\.[^.]+$/, '').replace(/[_\-\s.(（]*(cn|zh|chs|cht|中文|简体|繁体|中|en|eng|english|英文|英语|英|th|tha|thai|ไทย|泰语|泰文|泰)[)）]?$/i, '');
+    const name = base + (GEN_SUF[tgtLang()] || '_译文.srt');
+    const info = epInfo(name);
+    const ep = { name, num: info.num, group: info.group, base: baseOf(name), kind: 'srt', label: info.num != null ? 'EP' + p2(info.num) : base,
+      raw: null, bom: true, enc: 'utf-8', eol: '\r\n', trail: true, hash: fnv(name + s.cues.length), video: null, src: i, sample: false, struct: false, gen: true, dirty: true, qv: 0,
+      cues: s.cues.map((c, k) => ({ idx: c.idx != null ? c.idx : String(k + 1), s: fmt(c.sm), sep: ' --> ', e: fmt(c.em), tail: '', t: '', oS: fmt(c.sm), oE: fmt(c.em), oT: '', sm: c.sm, em: c.em })) };
+    return ep;
 }
 function makeThaiFromSrc() {
   const before = snapshotSel();
   dropSamples();
   let n = 0;
+  const recs = [];
   S.srcs.forEach((s, i) => {
-    if (s.sample || S.eps.some(e => e.src === i)) return;
-    const base = s.name.replace(/\.[^.]+$/, '').replace(/[_\-\s.(（]*(cn|zh|chs|cht|中文|简体|繁体|中|en|eng|english|英文|英语|英)[)）]?$/i, '');
-    const name = base + '_泰文.srt';
-    const info = epInfo(name);
-    const ep = { name, num: info.num, group: info.group, base: baseOf(name), kind: 'srt', label: info.num != null ? 'EP' + p2(info.num) : base,
-      raw: null, bom: true, enc: 'utf-8', eol: '\r\n', trail: true, hash: fnv(name + s.cues.length), video: null, src: i, sample: false, struct: false, gen: true, dirty: true, qv: 0,
-      cues: s.cues.map((c, k) => ({ idx: c.idx != null ? c.idx : String(k + 1), s: fmt(c.sm), sep: ' --> ', e: fmt(c.em), tail: '', t: '', oS: fmt(c.sm), oE: fmt(c.em), oT: '', sm: c.sm, em: c.em })) };
+    if (s.sample || s.fixed || S.eps.some(e => e.src === i)) return;
+    const ep = makeGenEp(i);
     S.eps.push(ep); n++;
+    recs.push({ name: ep.name, kind: 'gen', bytes: new Uint8Array(0), srcName: s.name });
   });
+  persistFiles(recs);
   finishLoad(before, {});
-  toast(`สร้างไฟล์แปลไทยเปล่า ${n} ตอน (ไทม์โค้ดตาม原文) · พิมพ์เอง หรือกด "AI ช่วยแปล/ตรวจ"`, { label: 'เปิด AI ช่วยแปล', fn: () => openAI('fill') });
+  toast(`สร้างไฟล์แปล${TGT_LABEL()}เปล่า ${n} ตอน (ไทม์โค้ดตาม原文) · พิมพ์เอง หรือกดปุ่ม AI`, { label: 'ให้ AI แปล', fn: () => openAI('fill') });
 }
 async function walkEntries(entries, flat) {
   if (!entries.length || entries.some(x => !x)) return { files: flat, folder: '' };
@@ -1175,7 +1268,10 @@ document.addEventListener('drop', e => {
   const dt = e.dataTransfer;
   const entries = [...dt.items].filter(i => i.kind === 'file').map(i => (i.webkitGetAsEntry ? i.webkitGetAsEntry() : null));
   const flat = [...dt.files];
-  const toGloss = !!e.target.closest && !!e.target.closest('#mGloss');
+  const inM = sel => !!e.target.closest && !!e.target.closest(sel);
+  if (inM('#mGuide')) { addGuideFiles(flat); return; }
+  if (inM('#mProj')) { if (flat[0]) importProject(flat[0]); return; }
+  const toGloss = inM('#mGloss');
   walkEntries(entries, flat).then(({ files, folder }) => toGloss ? loadGlossFiles(files, true) : addFiles(files, folder));
 });
 $('bFiles').onclick = () => $('fFiles').click();
@@ -1276,7 +1372,7 @@ function importSheet(f, book, si, m) {
 /* ---------- glossary ---------- */
 function setGloss(listIn, name) {
   S.gloss = listIn; S.glossName = name; S.G = glossCompile(listIn);
-  store.set('gloss', { name, list: listIn });
+  store.set(pk('gloss'), { name, list: listIn });
   renderGloss(); requalify();
 }
 async function loadGlossFiles(files, announce) {
@@ -1296,7 +1392,7 @@ async function loadGlossFiles(files, announce) {
 }
 function renderGloss() {
   $('gInfo').textContent = S.gloss.length ? `ใช้อยู่ ${S.gloss.length} คำ${S.glossName ? ' จาก ' + S.glossName : ''} · ตรวจได้จริง ${S.G.length} คำ (ข้ามคำจีนตัวเดียว)` : 'ยังไม่มี术语表';
-  $('gPrev').innerHTML = S.gloss.length ? `<table><thead><tr><th>原文</th><th>ไทย</th></tr></thead><tbody>${S.gloss.slice(0, 12).map(g => `<tr><td>${esc(g.src)}</td><td>${esc(g.th)}</td></tr>`).join('')}${S.gloss.length > 12 ? `<tr><td colspan="2" class="info">และอีก ${S.gloss.length - 12} คำ</td></tr>` : ''}</tbody></table>` : '';
+  renderGlossEd();
 }
 $('bGloss').onclick = () => { renderGloss(); openM('mGloss'); };
 $('gFile').onclick = () => $('fGloss').click();
@@ -1409,9 +1505,9 @@ const CFG_FIELDS = [
 const LEX_FIELDS = [
   ['maleP', 'หางเสียงผู้ชาย'], ['femaleP', 'หางเสียงผู้หญิง'], ['neutralP', 'หางเสียงกลาง'], ['maleR', 'สรรพนามผู้ชาย'], ['femaleR', 'สรรพนามผู้หญิง'],
   ['polite', 'หางเสียงสุภาพ (ใช้นับความถี่/ห้าม)'], ['prof', 'คำหยาบ'], ['spell', 'คำสะกดผิด (ผิด > ถูก)'], ['period', 'คำที่ห้ามในเรื่องย้อนยุค (คำ > ใช้แทน)'],
-  ['modern', 'คำที่ห้ามในเรื่องปัจจุบัน (คำ > ใช้แทน)'], ['allow', 'คำยกเว้น (ไม่ต้องเตือน เช่น เจ้าหน้าที่ ทรงผม คุณหนู)'], ['conj', 'คำเชื่อม (ใช้ตอนตัดบรรทัดอัตโนมัติ)']
+  ['modern', 'คำที่ห้ามในเรื่องปัจจุบัน (คำ > ใช้แทน)'], ['spellEn', 'คำสะกดผิดภาษาอังกฤษ (ผิด > ถูก)'], ['spellZh', '错别字 ภาษาจีน (ผิด > ถูก)'], ['allow', 'คำยกเว้น (ไม่ต้องเตือน เช่น เจ้าหน้าที่ ทรงผม คุณหนู)'], ['conj', 'คำเชื่อม (ใช้ตอนตัดบรรทัดอัตโนมัติ)']
 ];
-function presetOptions() { return PRESETS.map(([k, n]) => `<option value="${k}">${esc(n)}</option>`).join('') + '<option value="custom">กำหนดเอง</option>'; }
+function presetOptions() { return presetsFor(tgtLang()).map(([k, n]) => `<option value="${k}">${esc(n)}</option>`).join('') + '<option value="custom">กำหนดเอง</option>'; }
 function renderCfg() {
   const c = S.cfg;
   const field = ([k, lab, type, opts]) => {
@@ -1455,8 +1551,9 @@ $('cfgBody').addEventListener('change', e => {
   saveSettings(); syncCrit(); requalify();
 });
 $('bCfg').onclick = () => { renderCfg(); openM('mCfg'); };
-$('cfgReset').onclick = () => { S.cfg = Object.assign({}, DEF_CFG); S.lexSrc = Object.assign({}, DEF_LEX); S.L = compileLex(S.lexSrc); saveSettings(); renderCfg(); syncCrit(); requalify(); toast('คืนค่าเกณฑ์เริ่มต้นแล้ว'); };
+$('cfgReset').onclick = () => { S.cfg = cfgForTarget(tgtLang(), S.cfg.src); S.lexSrc = Object.assign({}, DEF_LEX); S.L = compileLex(S.lexSrc); saveSettings(); renderCfg(); syncCrit(); requalify(); toast('คืนค่าเกณฑ์เริ่มต้นแล้ว'); };
 function syncCrit() {
+  document.body.dataset.tgt = tgtLang();
   $('preset').innerHTML = presetOptions();
   $('preset').value = S.cfg.preset || 'custom';
   document.querySelectorAll('#modeSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.m === S.cfg.mode)));
@@ -1468,18 +1565,23 @@ $('modeSeg').addEventListener('click', e => { const b = e.target.closest('button
 $('limit').addEventListener('input', () => { const v = parseInt($('limit').value, 10); if (v > 0) { S.cfg.limit = v; S.cfg.preset = 'custom'; $('preset').value = 'custom'; saveSettings(); requalify(); } });
 $('era').addEventListener('change', () => { S.cfg.era = $('era').value; saveSettings(); requalify(); });
 
-/* ---------- AI (Claude via this page; copy prompt for other models) ---------- */
+/* ---------- AI: Claude via claude.ai, or the user's own Gemini / Claude / ChatGPT key ---------- */
 const AI = { ctl: null, res: [], map: new Map() };
-const TASKS = {
-  fill: 'แปลจาก原文เป็นภาษาไทย เฉพาะคิวที่ "th" ยังว่าง',
-  retrans: 'แปลจาก原文เป็นภาษาไทยใหม่ทุกคิว',
-  qa: 'ตรวจคำแปลไทยเทียบกับ原文 เสนอแก้เฉพาะคิวที่ผิดจริง (ความหมายผิด แปลขาด แปลเกิน เพศ/สรรพนาม/หางเสียงผิด ศัพท์ไม่ตรง术语表 คำผิด ภาษาไม่เป็นธรรมชาติ รูปแบบผิด) คิวที่ถูกและเป็นธรรมชาติอยู่แล้วห้ามแก้',
-  shorten: 'เกลาคำแปลไทยให้แต่ละบรรทัดอยู่ในลิมิต โดยความหมายครบเหมือนเดิม ไม่เปลี่ยนชื่อ สรรพนาม หรือระดับภาษา ตัดเฉพาะคำที่ไม่จำเป็น ถ้าจำเป็นให้ตัดเป็น 2 บรรทัดตรงรอยต่อวลี ห้ามฉีกคำ',
-  particles: 'ตัดหางเสียง (ครับ ค่ะ คะ นะคะ เพคะ ขอรับ ฯลฯ) ที่ไม่จำเป็นออก ให้เหลือเฉพาะที่ทำให้ประโยคสุภาพหรือเป็นธรรมชาติจริง เช่น คำตอบสั้น ๆ หรือคำเรียกขาน ห้ามแก้ส่วนอื่น'
-};
+const LANG_TH = { zh: 'จีน', th: 'ไทย', en: 'อังกฤษ', ja: 'ญี่ปุ่น', ko: 'เกาหลี', other: 'ต้นฉบับ' };
+function taskText(task) {
+  const T = TGT_LABEL();
+  return {
+    fill: `แปลจาก原文เป็นภาษา${T} เฉพาะคิวที่ "t" ยังว่าง`,
+    retrans: `แปลจาก原文เป็นภาษา${T}ใหม่ทุกคิว`,
+    qa: `ตรวจคำแปลภาษา${T}เทียบกับ原文 เสนอแก้เฉพาะคิวที่ผิดจริง (ความหมายผิด แปลขาด แปลเกิน เพศ/สรรพนามผิด ศัพท์ไม่ตรง术语表 คำผิด ภาษาไม่เป็นธรรมชาติ รูปแบบผิด) คิวที่ถูกและเป็นธรรมชาติอยู่แล้วห้ามแก้`,
+    spell: `ตรวจเฉพาะคำผิดในคำแปลภาษา${T}: สะกดผิด พิมพ์ผิด ตัวอักษรตกหล่นหรือเกิน สระ/วรรณยุกต์ผิด เว้นวรรคผิด ${tgtLang() === 'zh' ? 'ใช้อักษรจีนผิดตัว (错别字 เช่น 的/地/得 在/再 以/已)' : tgtLang() === 'en' ? 'grammar ผิดชัดเจน ตัวพิมพ์ใหญ่-เล็กผิด' : 'คำที่มักเขียนผิดตามราชบัณฑิตยสถาน'} แก้เฉพาะคำที่ผิด ห้ามแก้สำนวน ความหมาย การตัดบรรทัด หรืออย่างอื่นที่ไม่ใช่คำผิด`,
+    shorten: `เกลาคำแปลภาษา${T}ให้แต่ละบรรทัดอยู่ในลิมิต โดยความหมายครบเหมือนเดิม ไม่เปลี่ยนชื่อ สรรพนาม หรือระดับภาษา ตัดเฉพาะคำที่ไม่จำเป็น ถ้าจำเป็นให้ตัดเป็น 2 บรรทัดตรงรอยต่อวลี ห้ามฉีกคำ`,
+    particles: 'ตัดหางเสียง (ครับ ค่ะ คะ นะคะ เพคะ ขอรับ ฯลฯ) ที่ไม่จำเป็นออก ให้เหลือเฉพาะที่ทำให้ประโยคสุภาพหรือเป็นธรรมชาติจริง เช่น คำตอบสั้น ๆ หรือคำเรียกขาน ห้ามแก้ส่วนอื่น'
+  }[task];
+}
 function aiTargets(task, scope) {
   const out = [];
-  const push = (ei, ci) => { const ep = S.eps[ei], c = ep.cues[ci]; out.push([ei, ci]); };
+  const push = (ei, ci) => { out.push([ei, ci]); };
   if (scope === 'sel') selCues().forEach(([e, c]) => push(e, c));
   else {
     const eis = scope === 'all' ? qaScope().map(ep => S.eps.indexOf(ep)) : (S.sel ? [S.sel.e] : S.cur >= 0 ? [S.cur] : []);
@@ -1488,56 +1590,107 @@ function aiTargets(task, scope) {
   return out.filter(([ei, ci]) => {
     const c = S.eps[ei].cues[ci];
     if (task === 'fill') return !c.t.trim();
+    if (task === 'spell') return !!c.t.trim();
     if (task === 'shorten') { ensureQA(ei); return Q(c).ov; }
     if (task === 'particles') { ensureQA(ei); return Q(c).marks.some(m => /^g[mf]/.test(m.c) && !/gr/.test(m.c)); }
     return true;
   });
 }
 function aiPrompt(task, items) {
-  const cfg = S.cfg;
-  const era = cfg.era === 'period' ? 'ละครย้อนยุค: ใช้ภาษาโบราณ ข้า/เจ้า/ท่าน ใช้ราชาศัพท์ตามฐานะ (พ่ะย่ะค่ะ/เพคะ/กระหม่อม/หม่อมฉัน กับเชื้อพระวงศ์ · ขอรับ/เจ้าค่ะ/เจ้าคะ กับขุนนางหรือนาย) ใส่หางเสียงน้อยที่สุด ห้ามใช้ ไหม เหรอ ยังไง งั้น เถอะ แบบนี้ เมื่อไหร่ (ใช้ หรือไม่ หรือ อย่างไร เช่นนั้น เถิด เช่นนี้ เมื่อใด) ห้ามใช้ ครับ ค่ะ ผม ฉัน คุณ เธอ'
-    : cfg.era === 'modern' ? 'ละครยุคปัจจุบัน: ใช้ ผม/ฉัน/คุณ/นาย/เธอ/แก ห้ามใช้ ข้า เจ้า ท่านพ่อ ราชาศัพท์' : 'ดูยุคของเรื่องจากเนื้อหา แล้วใช้ระดับภาษาให้ตรงยุค';
-  const lim = `แต่ละบรรทัดยาวไม่เกิน ${cfg.limit} ตัวอักษร (${cfg.mode === 'se' ? 'นับแบบ SE ไม่นับสระบน-ล่างและวรรณยุกต์' : 'นับทุกตัว รวมสระ วรรณยุกต์ และช่องว่าง'}) ไม่เกิน ${cfg.maxLines} บรรทัดต่อคิว ใช้ \\n คั่นบรรทัด ถ้าบรรทัดเดียวพอห้ามตัดบรรทัด`;
-  const part = cfg.particles === 'ban' ? 'ห้ามมีหางเสียงสุภาพ (ครับ ค่ะ คะ นะคะ ฯลฯ)' : 'ใส่หางเสียงเท่าที่จำเป็น';
-  const punct = cfg.punct === 'strict' ? 'ห้ามใช้เครื่องหมาย ! ? … , . " ; (ตัวเลขอย่าง 10,000 ใช้ได้) ระหว่างวลีใช้เว้นวรรค' : 'ใช้เครื่องหมายตามมาตรฐานของงาน';
+  const cfg = S.cfg, T = tgtLang(), TN = TGT_LABEL();
+  const lines = [];
+  lines.push(`แต่ละบรรทัดยาวไม่เกิน ${cfg.limit} ตัวอักษร (${cfg.mode === 'se' && T === 'th' ? 'นับแบบ SE ไม่นับสระบน-ล่างและวรรณยุกต์' : 'นับทุกตัว รวมช่องว่าง'}) ไม่เกิน ${cfg.maxLines} บรรทัดต่อคิว ใช้ \\n คั่นบรรทัด ถ้าบรรทัดเดียวพอห้ามตัดบรรทัด`);
+  if (T === 'th') {
+    lines.push(cfg.era === 'period' ? 'ละครย้อนยุค: ใช้ภาษาโบราณ ข้า/เจ้า/ท่าน ใช้ราชาศัพท์ตามฐานะ (พ่ะย่ะค่ะ/เพคะ/กระหม่อม/หม่อมฉัน กับเชื้อพระวงศ์ · ขอรับ/เจ้าค่ะ/เจ้าคะ กับขุนนางหรือนาย) ใส่หางเสียงน้อยที่สุด ห้ามใช้ ไหม เหรอ ยังไง งั้น เถอะ แบบนี้ เมื่อไหร่ (ใช้ หรือไม่ หรือ อย่างไร เช่นนั้น เถิด เช่นนี้ เมื่อใด) ห้ามใช้ ครับ ค่ะ ผม ฉัน คุณ เธอ'
+      : cfg.era === 'modern' ? 'ละครยุคปัจจุบัน: ใช้ ผม/ฉัน/คุณ/นาย/เธอ/แก ห้ามใช้ ข้า เจ้า ท่านพ่อ ราชาศัพท์' : 'ดูยุคของเรื่องจากเนื้อหา แล้วใช้ระดับภาษาให้ตรงยุค');
+    lines.push(cfg.particles === 'ban' ? 'ห้ามมีหางเสียงสุภาพ (ครับ ค่ะ คะ นะคะ ฯลฯ)' : 'ใส่หางเสียงเท่าที่จำเป็น');
+    lines.push(cfg.punct === 'strict' ? 'ห้ามใช้เครื่องหมาย ! ? … , . " ; (ตัวเลขอย่าง 10,000 ใช้ได้) ระหว่างวลีใช้เว้นวรรค' : 'ใช้เครื่องหมายตามมาตรฐานของงาน');
+  } else if (T === 'zh') {
+    lines.push('ใช้จีนตัวย่อ (简体中文)');
+    lines.push(cfg.punct === 'strict' ? 'ห้ามใช้ ，。；、 ระหว่างวลีใช้เว้นวรรค' : 'ใช้เครื่องหมายตามมาตรฐานของงาน');
+  } else lines.push('ภาษาอังกฤษแบบซับไตเติ้ล เครื่องหมายวรรคตอนปกติ');
+  if (cfg.cpsMax) lines.push(`ความเร็วอ่านไม่เกิน ${cfg.cpsMax} ตัวอักษรต่อวินาที ("sec" คือความยาวคิว)`);
   const srcAll = items.map(([ei, ci]) => srcTextOf(S.eps[ei], S.eps[ei].cues[ci])).join('\n');
   const gl = S.G.filter(g => g.lat ? g.rx.test(srcAll) : srcAll.includes(g.src)).slice(0, 200);
+  const cl = curClient();
+  const srcLang = (() => { for (const [ei] of items) { const s = epSrc(S.eps[ei]); if (s) return LANG_TH[s.lang] || 'ต้นฉบับ'; } return S.cfg.src !== 'auto' ? LANG_TH[S.cfg.src] : 'ต้นฉบับ'; })();
   const data = items.map(([ei, ci], k) => {
     const ep = S.eps[ei], c = ep.cues[ci];
-    return JSON.stringify({ i: String(k + 1), ep: ep.label, time: ep.noTime ? undefined : c.s, sec: ep.noTime ? undefined : +((c.em - c.sm) / 1000).toFixed(2), src: srcTextOf(ep, c), th: c.t });
+    return JSON.stringify({ i: String(k + 1), ep: ep.label, time: ep.noTime ? undefined : c.s, sec: ep.noTime ? undefined : +((c.em - c.sm) / 1000).toFixed(2), src: task === 'spell' ? undefined : srcTextOf(ep, c), t: c.t });
   }).join('\n');
-  return `คุณคือนักแปลและ QA ซับไตเติ้ลภาษาไทยมืออาชีพ (原文 → ไทย) ของ Hell's Factory
+  return `คุณคือนักแปลและ QA ซับไตเติ้ลมืออาชีพ (${srcLang} → ${TN}) ของ Hell's Factory
 
-งาน: ${TASKS[task]}
+งาน: ${taskText(task)}
 
 เกณฑ์รูปแบบ:
-- ${lim}
-- ${era}
-- ${part}
-- ${punct}
-
-กฎของงานนี้:
-${S.view.aiRules}
+${lines.map(l => '- ' + l).join('\n')}
+${cl && cl.rules ? `\nกฎของลูกค้า ${cl.name} (สำคัญที่สุด ถ้าขัดกับกฎอื่นให้ยึดข้อนี้):\n${cl.rules}\n` : ''}
+กฎทั่วไปของงานนี้:
+${S.aiRules}
 ${gl.length ? `\n术语表 (ต้องใช้คำแปลนี้เท่านั้น):\n${gl.map(g => `${g.src} = ${g.th}`).join('\n')}\n` : ''}
-ข้อมูล (หนึ่งบรรทัดต่อคิว เรียงตามเวลา "src" คือ原文 "th" คือคำแปลไทยปัจจุบัน "sec" คือความยาวคิวเป็นวินาที):
+ข้อมูล (หนึ่งบรรทัดต่อคิว เรียงตามเวลา${task === 'spell' ? '' : ' "src" คือ原文'} "t" คือคำแปลภาษา${TN}ปัจจุบัน "sec" คือความยาวคิวเป็นวินาที):
 ${data}
 
-ตอบกลับเป็น JSON array เท่านั้น ห้ามมีข้อความอื่น รูปแบบ: [{"i":"1","th":"คำแปลไทย","note":"เหตุผลสั้น ๆ ภาษาไทย"}]
-${task === 'qa' || task === 'particles' ? 'ใส่เฉพาะคิวที่ต้องแก้ ถ้าไม่มีคิวไหนต้องแก้ให้ตอบ []' : 'ใส่ให้ครบทุกคิว'} · "th" ต้องเป็นข้อความทั้งคิวหลังแก้ (ใช้ \\n คั่นบรรทัด)`;
+ตอบกลับเป็น JSON array เท่านั้น ห้ามมีข้อความอื่น รูปแบบ: [{"i":"1","t":"คำแปลทั้งคิวหลังแก้","note":"เหตุผลสั้น ๆ ภาษาไทย"}]
+${['qa', 'particles', 'spell'].includes(task) ? 'ใส่เฉพาะคิวที่ต้องแก้ ถ้าไม่มีคิวไหนต้องแก้ให้ตอบ []' : 'ใส่ให้ครบทุกคิว'} · "t" ต้องเป็นข้อความทั้งคิวหลังแก้ (ใช้ \\n คั่นบรรทัด)`;
 }
-function aiNote() {
-  getSample().then(s => { $('aiGo').hidden = !s; $('aiNote').textContent = s ? 'ใช้ Claude จากบัญชีของเธอ (ครั้งแรกจะถามอนุญาตก่อน) งานยาวจะแบ่งส่งทีละ 40 คิว ผลลัพธ์ยังไม่ถูกใส่จนกว่าจะกด "ใช้ข้อเสนอที่เลือก"' : 'หน้านี้เรียก Claude ไม่ได้ (เปิดนอก claude.ai) ใช้ปุ่ม "คัดลอก prompt" ไปวางใน Gemini / ChatGPT / Claude แล้ววางผลลัพธ์กลับมาได้'; });
+/* provider + model pickers (shared by the AI and guide windows) */
+let hostOK = null;
+AIX.hostClaude().then(h => { hostOK = !!h; renderConnState(); });
+async function provOptions(sel, model, cur) {
+  const av = await AIX.available();
+  const name = p => p === 'host' ? 'Claude (claude.ai)' : AIX.PROVIDERS[p].name;
+  sel.innerHTML = av.map(p => `<option value="${p}">${esc(name(p))}</option>`).join('') + '<option value="__conn">＋ เชื่อมต่อ AI…</option>';
+  const pick = av.includes(cur) ? cur : av[0] || '';
+  sel.value = pick || '__conn';
+  await modelOptions(model, pick, AIX.getSel().model);
+  return pick;
 }
-function openAI(task) {
+async function modelOptions(sel, prov, cur) {
+  if (!prov || prov === '__conn') { sel.innerHTML = '<option value="">—</option>'; sel.disabled = true; return; }
+  sel.disabled = false;
+  let list = prov === 'host' ? AIX.HOST_MODELS : AIX.cachedModels(prov);
+  if (!list.length) {
+    sel.innerHTML = '<option value="">กำลังโหลดรายชื่อรุ่น…</option>';
+    try { list = await AIX.listModels(prov); AIX.cacheModels(prov, list); } catch (e) { sel.innerHTML = `<option value="">โหลดรุ่นไม่ได้: ${esc(e.message || '')}</option>`; return; }
+  }
+  sel.innerHTML = list.map(m => `<option value="${esc(m.id)}">${m.top ? '★ ' : ''}${esc(m.name || m.id)}${m.top ? ' (แนะนำ)' : ''}</option>`).join('');
+  sel.value = list.some(m => m.id === cur) ? cur : list[0] ? list[0].id : '';
+}
+function aiErr(e, prov) {
+  const code = e && e.code, st = e && e.status, m = String((e && e.message) || '');
+  if (code === 'cancelled' || (e && e.name === 'AbortError')) return 'หยุดแล้ว';
+  if (code === 'not_granted') return 'ไม่ได้อนุญาตให้หน้านี้ใช้ Claude';
+  if (code === 'rate_limited' || st === 429) return 'ใช้ถี่เกินไป หรือโควตาของวันนี้หมด รอสักพักแล้วลองใหม่ (หรือเปลี่ยนไปใช้รุ่นอื่น)';
+  if (code === 'invalid_json') return 'AI ตอบกลับมาไม่ใช่รูปแบบที่อ่านได้ ลองกดใหม่ หรือลดขอบเขตลง';
+  if (st === 401 || st === 403 || /api key|API_KEY|permission|unauthori/i.test(m)) return `กุญแจของ ${prov && AIX.PROVIDERS[prov] ? AIX.PROVIDERS[prov].name : 'AI'} ใช้ไม่ได้ หรือหมดอายุ ไปที่ ☰ → เชื่อมต่อ AI แล้วใส่กุญแจใหม่`;
+  if (/credit|balance|billing|quota|insufficient/i.test(m)) return 'เครดิตหรือโควตาไม่พอ เติมเครดิตในเว็บของเจ้านั้นก่อน หรือเปลี่ยนไปใช้ AI อื่น';
+  if (/Failed to fetch|NetworkError|network/i.test(m)) return 'ต่ออินเทอร์เน็ตไม่ได้ หรือหน้านี้เรียก AI ภายนอกไม่ได้ (ในเว็บ claude.ai ใช้ได้เฉพาะ Claude ผ่าน claude.ai)';
+  return 'เกิดข้อผิดพลาด: ' + m.slice(0, 220);
+}
+async function aiNote() {
+  const av = await AIX.available();
+  $('aiGo').hidden = !av.length;
+  $('aiNote').textContent = av.length ? `เลือกงาน แล้วกด "ให้ AI ทำ" งานยาวจะแบ่งส่งทีละ 40 คิว ผลลัพธ์ยังไม่ถูกใส่จนกว่าจะกด "ใช้ข้อเสนอที่เลือก"`
+    : 'ยังไม่ได้เชื่อม AI กด ☰ → "เชื่อมต่อ AI" (หรือเลือก "＋ เชื่อมต่อ AI…" ในช่อง AI) ใช้เวลาไม่ถึง 2 นาที · หรือใช้ปุ่ม "คัดลอก prompt" ไปวางเองก็ได้';
+}
+async function openAI(task, scope) {
   if (task) $('aiTask').value = task;
-  $('aiScope').value = S.multi.size > 1 ? 'sel' : $('aiScope').value;
-  $('aiRules').value = S.view.aiRules;
-  $('aiTier').value = S.view.aiTier;
-  aiNote(); renderAIRes(); openM('mAI');
+  if (scope) $('aiScope').value = scope;
+  else $('aiScope').value = S.multi.size > 1 ? 'sel' : $('aiScope').value;
+  $('aiRules').value = S.aiRules;
+  openM('mAI'); renderAIRes(); aiNote();
+  await provOptions($('aiProv'), $('aiModel'), AIX.getSel().provider);
 }
 $('bAI').onclick = () => openAI();
-$('aiRules').addEventListener('change', () => { S.view.aiRules = $('aiRules').value; saveSettings(); });
-$('aiTier').addEventListener('change', () => { S.view.aiTier = $('aiTier').value; saveSettings(); });
+$('aiRules').addEventListener('change', () => { S.aiRules = $('aiRules').value; saveSettings(); });
+$('aiProv').addEventListener('change', async () => {
+  const p = $('aiProv').value;
+  if (p === '__conn') { closeM('mAI'); openConn(); return; }
+  AIX.setSel({ provider: p }); await modelOptions($('aiModel'), p, AIX.getSel().model);
+  AIX.setSel({ model: $('aiModel').value });
+});
+$('aiModel').addEventListener('change', () => AIX.setSel({ model: $('aiModel').value }));
 function renderAIRes() {
   if (!AI.res.length) { $('aiRes').innerHTML = ''; $('aiApply').disabled = true; return; }
   $('aiRes').innerHTML = `<table class="ai-res"><thead><tr><th></th><th>คิว</th><th>原文</th><th>เดิม</th><th>AI เสนอ</th><th>หมายเหตุ</th></tr></thead><tbody>${AI.res.map((r, k) => {
@@ -1551,12 +1704,14 @@ $('aiRes').addEventListener('change', e => { const k = e.target.dataset.k; if (k
 $('aiRes').addEventListener('click', e => { const b = e.target.closest('[data-go]'); if (!b) return; const r = AI.res[+b.dataset.go]; closeM('mAI'); select(r.ei, r.ci, { center: true }); });
 $('aiAll').onclick = () => { const on = !AI.res.every(r => r.on); AI.res.forEach(r => { r.on = on; }); renderAIRes(); };
 function takeResults(arr, items) {
+  if (arr && !Array.isArray(arr) && typeof arr === 'object') arr = arr.items || arr.results || arr.data || Object.values(arr).find(Array.isArray) || [];
   if (!Array.isArray(arr)) throw new Error('ผลลัพธ์ไม่ใช่ JSON array');
   let n = 0;
   for (const o of arr) {
     const k = parseInt(o && o.i, 10) - 1;
-    if (!(k >= 0 && k < items.length) || typeof o.th !== 'string') continue;
-    const [ei, ci] = items[k], th = o.th.replace(/\\N/g, '\n').replace(/\r/g, '').trim();
+    const tv = o && (typeof o.t === 'string' ? o.t : typeof o.th === 'string' ? o.th : null);
+    if (!(k >= 0 && k < items.length) || tv == null) continue;
+    const [ei, ci] = items[k], th = tv.replace(/\\N/g, '\n').replace(/\\n/g, '\n').replace(/\r/g, '').trim();
     const c = S.eps[ei].cues[ci];
     if (th === c.t) continue;
     AI.res = AI.res.filter(r => !(r.ei === ei && r.ci === ci));
@@ -1566,48 +1721,44 @@ function takeResults(arr, items) {
   return n;
 }
 $('aiGo').onclick = async () => {
-  const sample = await getSample();
-  if (!sample) { aiNote(); return; }
+  const prov = $('aiProv').value, model = $('aiModel').value;
+  if (!prov || prov === '__conn') { closeM('mAI'); openConn(); return; }
   const task = $('aiTask').value, items = aiTargets(task, $('aiScope').value);
   if (!items.length) { $('aiProg').textContent = task === 'fill' ? 'ไม่มีคิวที่ยังว่างในขอบเขตนี้' : 'ไม่มีคิวในขอบเขตนี้'; return; }
-  if (['fill', 'retrans', 'qa'].includes(task) && !items.some(([ei, ci]) => srcTextOf(S.eps[ei], S.eps[ei].cues[ci]))) { $('aiProg').textContent = 'คิวพวกนี้ไม่มี原文 ใส่ซับต้นฉบับก่อน (จับคู่ไฟล์)'; return; }
-  S.view.aiRules = $('aiRules').value; saveSettings();
+  if (['fill', 'retrans', 'qa'].includes(task) && !items.some(([ei, ci]) => srcTextOf(S.eps[ei], S.eps[ei].cues[ci]))) { $('aiProg').textContent = 'คิวพวกนี้ไม่มี原文 ใส่ซับต้นฉบับก่อน (เปิดไฟล์ → จับคู่ไฟล์)'; return; }
+  S.aiRules = $('aiRules').value; saveSettings();
   AI.ctl = new AbortController();
   $('aiGo').disabled = true; $('aiStop').hidden = false;
-  const B = 40, total = Math.ceil(items.length / B);
+  const B = 40, total = Math.ceil(items.length / B), who = $('aiProv').selectedOptions[0].textContent;
   let got = 0;
   try {
     for (let b = 0; b < total; b++) {
       const chunk = items.slice(b * B, (b + 1) * B);
-      $('aiProg').textContent = `Claude กำลังทำชุด ${b + 1}/${total} (${chunk.length} คิว)…`;
-      const arr = await sample.json(aiPrompt(task, chunk), { modelTier: $('aiTier').value, signal: AI.ctl.signal });
+      $('aiProg').textContent = `${who} กำลังทำชุด ${b + 1}/${total} (${chunk.length} คิว)…`;
+      const arr = await AIX.chat({ provider: prov, model, prompt: aiPrompt(task, chunk), json: true, signal: AI.ctl.signal });
       got += takeResults(arr, chunk);
       renderAIRes();
     }
-    $('aiProg').textContent = `เสร็จแล้ว ได้ข้อเสนอ ${got} คิว เลือกแล้วกด "ใช้ข้อเสนอที่เลือก"`;
+    $('aiProg').textContent = got ? `เสร็จแล้ว ได้ข้อเสนอ ${got} คิว เลือกแล้วกด "ใช้ข้อเสนอที่เลือก"` : (['qa', 'spell', 'particles'].includes(task) ? 'เสร็จแล้ว AI ไม่เจอจุดที่ต้องแก้' : 'เสร็จแล้ว ไม่มีอะไรเปลี่ยน');
   } catch (e) {
-    const code = e && e.code;
-    $('aiProg').textContent = code === 'cancelled' ? `หยุดแล้ว ได้ข้อเสนอ ${got} คิว` : code === 'not_granted' ? 'ไม่ได้อนุญาตให้หน้านี้ใช้ Claude' : code === 'rate_limited' ? 'ใช้ Claude ถี่เกินไปหรือถึงลิมิตการใช้งาน รอสักพักแล้วลองใหม่' : code === 'invalid_json' ? 'Claude ตอบกลับมาไม่ใช่ JSON ลองกดใหม่ หรือลดขอบเขตลง' : `เกิดข้อผิดพลาด: ${(e && (e.message || code)) || ''}`;
+    $('aiProg').textContent = (got ? `ได้ข้อเสนอ ${got} คิว แล้วหยุด: ` : '') + aiErr(e, prov);
   } finally { $('aiGo').disabled = false; $('aiStop').hidden = true; AI.ctl = null; }
 };
 $('aiStop').onclick = () => { if (AI.ctl) AI.ctl.abort(); };
 $('aiCopy').onclick = async () => {
   const task = $('aiTask').value, items = aiTargets(task, $('aiScope').value).slice(0, 500);
   if (!items.length) { $('aiProg').textContent = 'ไม่มีคิวในขอบเขตนี้'; return; }
-  S.view.aiRules = $('aiRules').value; saveSettings();
+  S.aiRules = $('aiRules').value; saveSettings();
   AI.pasteItems = items;
   const p = aiPrompt(task, items);
-  try { await navigator.clipboard.writeText(p); $('aiProg').textContent = `คัดลอก prompt แล้ว (${items.length} คิว) ไปวางใน Gemini / ChatGPT แล้วนำผลลัพธ์มาวางด้วยปุ่ม "วางผลลัพธ์จาก AI อื่น"`; $('aiPromptBox').hidden = true; }
+  try { await navigator.clipboard.writeText(p); $('aiProg').textContent = `คัดลอก prompt แล้ว (${items.length} คิว) ไปวางใน AI ที่ใช้อยู่ แล้วนำผลลัพธ์มาวางด้วยปุ่ม "วางผลลัพธ์จาก AI อื่น"`; $('aiPromptBox').hidden = true; }
   catch (e) { $('aiPromptBox').value = p; $('aiPromptBox').hidden = false; $('aiPromptBox').select(); $('aiProg').textContent = 'คัดลอกอัตโนมัติไม่ได้ ก๊อปจากกล่องด้านล่างแทน'; }
 };
 $('aiPasteT').onclick = () => { $('aiPaste').hidden = !$('aiPaste').hidden; $('aiPasteBtns').hidden = $('aiPaste').hidden; if (!$('aiPaste').hidden) $('aiPaste').focus(); };
 $('aiPasteGo').onclick = () => {
   const items = AI.pasteItems || aiTargets($('aiTask').value, $('aiScope').value).slice(0, 500);
-  let txt = $('aiPaste').value.trim();
-  const fence = txt.match(/```(?:json)?\s*([\s\S]*?)```/); if (fence) txt = fence[1];
-  const a = txt.indexOf('['), b = txt.lastIndexOf(']');
-  try { const n = takeResults(JSON.parse(txt.slice(a, b + 1)), items); renderAIRes(); $('aiProg').textContent = `อ่านผลลัพธ์ได้ ${n} คิว`; }
-  catch (e) { $('aiProg').textContent = 'อ่านผลลัพธ์ไม่ได้ ต้องเป็น JSON array แบบ [{"i":"1","th":"..."}]'; }
+  try { const n = takeResults(AIX.parseJSON($('aiPaste').value), items); renderAIRes(); $('aiProg').textContent = `อ่านผลลัพธ์ได้ ${n} คิว`; }
+  catch (e) { $('aiProg').textContent = 'อ่านผลลัพธ์ไม่ได้ ต้องเป็น JSON array แบบ [{"i":"1","t":"..."}]'; }
 };
 $('aiApply').onclick = () => {
   const take = AI.res.filter(r => r.on && S.eps[r.ei] && S.eps[r.ei].cues[r.ci]);
@@ -1620,6 +1771,43 @@ $('aiApply').onclick = () => {
   renderAIRes(); renderStats(); loadEditor(); renderOverlay(true);
   toast(`ใส่ข้อเสนอ AI แล้ว ${take.length} คิว`, { label: 'เลิกทำ', fn: undo });
 };
+
+/* connections window */
+function openConn() { renderConn(); openM('mConn'); }
+function renderConnState() { if ($('mConn').classList.contains('open')) renderConn(); }
+function renderConn() {
+  const keys = AIX.getKeys();
+  $('hostBox').hidden = !hostOK;
+  $('provList').innerHTML = Object.entries(AIX.PROVIDERS).map(([p, P]) => `<div class="prov" data-p="${p}">
+    <div class="prov-h"><b>${esc(P.name)}</b>${P.free ? '<span class="badge">มีโควตาฟรี</span>' : ''}<span class="st${keys[p] ? ' ok' : ''}" id="st-${p}">${keys[p] ? '✓ เชื่อมแล้ว' : 'ยังไม่เชื่อม'}</span></div>
+    <ol class="steps"><li><button class="btn sm" type="button" data-login="${p}">ล็อกอินเพื่อรับกุญแจ ↗</button></li><li>${esc(P.keyHelp)}</li></ol>
+    <div class="keyrow"><input class="field" type="password" id="k-${p}" placeholder="${keys[p] ? '••••••••' + esc(keys[p].slice(-4)) : 'วางกุญแจที่นี่'}" autocomplete="off" spellcheck="false" aria-label="กุญแจ ${esc(P.name)}">
+      <button class="btn sm" type="button" data-paste="${p}">วาง</button><button class="btn sm primary" type="button" data-test="${p}">เชื่อมต่อ</button>${keys[p] ? `<button class="btn sm ghost" type="button" data-del="${p}">ลบกุญแจ</button>` : ''}</div>
+    <p class="fine note">${esc(P.note)}</p></div>`).join('');
+}
+$('provList').addEventListener('click', async e => {
+  const b = e.target.closest('button'); if (!b) return;
+  const p = b.dataset.login || b.dataset.paste || b.dataset.test || b.dataset.del;
+  if (b.dataset.login) { AIX.openLink(AIX.PROVIDERS[p].keyUrl); return; }
+  if (b.dataset.paste) { try { $('k-' + p).value = (await navigator.clipboard.readText()).trim(); } catch (err) { $('k-' + p).focus(); toast('กด Ctrl+V ในช่องกุญแจแทน'); } return; }
+  if (b.dataset.del) { AIX.setKey(p, ''); AIX.cacheModels(p, []); renderConn(); return; }
+  if (b.dataset.test) {
+    const v = $('k-' + p).value.trim(), had = AIX.getKeys()[p];
+    if (!v && !had) { toast('วางกุญแจก่อน'); $('k-' + p).focus(); return; }
+    if (v) AIX.setKey(p, v);
+    const st = $('st-' + p); st.textContent = 'กำลังทดสอบ…'; st.className = 'st';
+    try {
+      const list = await AIX.listModels(p); AIX.cacheModels(p, list);
+      st.textContent = `✓ เชื่อมแล้ว · มี ${list.length} รุ่น · แนะนำ ${list.filter(m => m.top).map(m => m.name || m.id).join(', ')}`; st.className = 'st ok';
+      if (!AIX.getSel().provider || AIX.getSel().provider === 'host' && !hostOK) AIX.setSel({ provider: p, model: list[0] && list[0].id });
+      $('k-' + p).value = ''; $('k-' + p).placeholder = '••••••••' + AIX.getKeys()[p].slice(-4);
+    } catch (err) {
+      if (v && !had) AIX.setKey(p, '');
+      st.textContent = '✕ ' + aiErr(err, p); st.className = 'st bad';
+    }
+  }
+});
+$('bConn').onclick = () => { closeMenus(); openConn(); };
 
 /* ---------- export ---------- */
 function defaultZipName() {
@@ -1648,10 +1836,21 @@ function updExInfo() {
   $('exGo').disabled = !l.length;
 }
 document.querySelectorAll('input[name=exScope]').forEach(r => r.addEventListener('change', updExInfo));
+const exBase = () => defaultZipName().replace(/\.zip$/, '');
+function exDefaultName() {
+  const f = document.querySelector('input[name=exFmt]:checked').value;
+  const onlyXl = f === 'xlsx' && !$('exDz').checked && !(realEps().some(e => e.kind === 'xlsx') && $('exXlsx').checked);
+  return onlyXl ? exBase() + '.xlsx' : defaultZipName();
+}
+function syncExFmt() { const f = document.querySelector('input[name=exFmt]:checked').value; $('exXlOpts').hidden = f === 'subs'; if (!$('exName').dataset.touched) $('exName').value = exDefaultName(); }
+document.querySelectorAll('input[name=exFmt]').forEach(r => r.addEventListener('change', syncExFmt));
+['exDz', 'exXlsx'].forEach(id => $(id).addEventListener('change', syncExFmt));
+$('exName').addEventListener('input', () => { $('exName').dataset.touched = '1'; });
 function openExport() {
   if (!realEps().length) { toast('ยังไม่มีไฟล์ซับจริง ลากไฟล์เข้ามาก่อน'); return; }
   flushDrafts();
-  $('exName').value = defaultZipName();
+  delete $('exName').dataset.touched;
+  syncExFmt();
   updExInfo(); openM('mExport');
 }
 const addSuffix = name => /_修改\.[^.]+$/.test(name) ? name : name.replace(/(\.[^.]+)$/, '_修改$1');
@@ -1700,8 +1899,9 @@ $('exGo').onclick = async () => {
   const suf = $('exSuf').checked, seen = new Map(), files = [];
   const add = (name, data) => { const n = (seen.get(name) || 0) + 1; seen.set(name, n); if (n > 1) name = name.replace(/(\.[^.]+)$/, ` (${n})$1`); files.push({ name, data }); };
   $('exGo').disabled = true; $('exInfo').textContent = 'กำลังสร้างไฟล์…';
+  const fmtSel = document.querySelector('input[name=exFmt]:checked').value, wantSubs = fmtSel !== 'xlsx', wantXl = fmtSel !== 'subs';
   try {
-    if ($('exSubs').checked) for (const ep of l.filter(e => e.kind !== 'xlsx')) {
+    if (wantSubs && $('exSubs').checked) for (const ep of l.filter(e => e.kind !== 'xlsx')) {
       const ed = epEdited(ep);
       add(ed && suf ? addSuffix(ep.name) : ep.name, ed || !ep.raw ? encodeFile(ep) : ep.raw);
     }
@@ -1719,15 +1919,17 @@ $('exGo').onclick = async () => {
         add(edits.size && suf ? addSuffix(bk.name) : bk.name, data);
       }
     }
-    if ($('exXSrt').checked) for (const ep of xl.filter(e => !e.noTime)) {
+    if (wantSubs && $('exXSrt').checked) for (const ep of xl.filter(e => !e.noTime)) {
       const nm = /\.srt$/i.test(ep.key) ? ep.key : safeName(ep.key) + '.srt';
       add(epEdited(ep) && suf ? addSuffix(nm) : nm, encodeFile(Object.assign({}, ep, { kind: 'srt', struct: true })));
     }
-    if ($('exDz').checked) add(defaultZipName().replace(/\.zip$/, '').replace(/_修改$/, '') + '_中泰对照.xlsx', dzBook(l));
+    if (wantXl) add(exBase() + '.xlsx', xlBook(l, document.querySelector('input[name=exSheet]:checked').value === 'per', $('exXlIss').checked));
+    if ($('exDz').checked) add(defaultZipName().replace(/\.zip$/, '').replace(/_修改$/, '') + '_对照表.xlsx', dzBook(l));
     if (!files.length) { $('exInfo').textContent = 'ยังไม่ได้เลือกไฟล์ที่จะส่งออก'; return; }
     let zn = $('exName').value.trim() || 'subtitles.zip';
-    if (!/\.zip$/i.test(zn)) zn += '.zip';
     closeM('mExport');
+    if (files.length === 1 && /\.xlsx$/i.test(files[0].name)) { const nm = /\.xlsx$/i.test(zn) ? zn : zn.replace(/\.zip$/i, '') + '.xlsx'; await saveFile(nm, files[0].data, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'); return; }
+    zn = zn.replace(/\.xlsx$/i, ''); if (!/\.zip$/i.test(zn)) zn += '.zip';
     await saveFile(zn, makeZip(files));
   } catch (e) { $('exInfo').textContent = 'ส่งออกไม่ได้: ' + (e.message || e); }
   finally { $('exGo').disabled = false; }
@@ -1826,7 +2028,7 @@ $('bPlayL').onclick = playCue;
 /* ---------- keyboard ---------- */
 document.addEventListener('keydown', e => {
   const typing = !!(e.target.closest && e.target.closest('input, textarea, select, button, [contenteditable]'));
-  if (e.key === 'Escape') { document.querySelectorAll('.modal.open').forEach(m => closeM(m.id)); return; }
+  if (e.key === 'Escape') { if (document.querySelector('.menu:not([hidden])')) { closeMenus(); return; } if (document.querySelector('.modal.open')) { document.querySelectorAll('.modal.open').forEach(m => closeM(m.id)); return; } if (!$('askPanel').hidden && e.target.closest && e.target.closest('#askPanel')) { closeAsk(); return; } return; }
   const mod = e.ctrlKey || e.metaKey, k = (e.key || '').toLowerCase();
   if (mod && !e.altKey && k === 's') { e.preventDefault(); saveNow(true); return; }
   if (e.key === 'F1' || (mod && (k === '/' || e.code === 'Slash'))) { e.preventDefault(); openM('mKeys'); return; }
@@ -1836,6 +2038,9 @@ document.addEventListener('keydown', e => {
   if (mod && e.shiftKey && k === 'o') { e.preventDefault(); $('bDir').click(); return; }
   if (mod && e.shiftKey && k === 'q') { e.preventDefault(); $('bQA').click(); return; }
   if (mod && e.shiftKey && k === 'a') { e.preventDefault(); $('bAI').click(); return; }
+  if (mod && e.shiftKey && k === 'p') { e.preventDefault(); openProjWin(); return; }
+  if (mod && !e.shiftKey && k === 'j') { e.preventDefault(); $('bAsk').click(); return; }
+  if (mod && !e.shiftKey && k === 'h') { e.preventDefault(); if ($('repRow').hidden) $('tRep').click(); else $('r').focus(); return; }
   if (mod && !e.shiftKey && k === 'd') { e.preventDefault(); toggleDone(); return; }
   if (mod && !e.shiftKey && k === 'g') { e.preventDefault(); $('bGloss').click(); return; }
   if (mod && !typing && ((e.shiftKey && k === 'z') || (!e.shiftKey && k === 'y'))) { e.preventDefault(); redo(); return; }
@@ -1855,6 +2060,564 @@ document.addEventListener('keydown', e => {
   if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); moveSel(e.key === 'ArrowDown' ? 1 : -1); }
 });
 
+
+/* ---------- projects ---------- */
+const SRC_NAME = { auto: 'ต้นฉบับ', zh: 'จีน', th: 'ไทย', en: 'อังกฤษ' };
+const pairName = pr => `${SRC_NAME[pr.src] || 'ต้นฉบับ'} → ${TGT_NAME[pr.tgt] || 'ไทย'}`;
+const fmtDate = t => t ? new Date(t).toLocaleString('th-TH', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '-';
+const b64enc = u8 => { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
+const b64dec = b => { const s = atob(b || ''), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u; };
+function renderProjChip() {
+  const pr = curProj(), cl = curClient();
+  $('pjName').textContent = pr.name;
+  $('pjMeta').textContent = `${pairName(pr)} · ${cl ? cl.name : 'ไม่ระบุลูกค้า'}`;
+  document.title = pr.name + " · Hell's Factory Studio";
+}
+function touchProj() { const pr = curProj(); if (!pr) return; const n = realEps().length; if (n || !pr.eps) pr.eps = n; pr.updated = Date.now(); saveProjects(); }
+async function persistFiles(recs) {
+  const pid = S.pid;
+  for (const r of recs) {
+    try { await PDB.putFile(pid, r.name, r.kind, r.bytes, r.srcName ? { srcName: r.srcName } : null); }
+    catch (e) { if (!persistFiles.warned) { persistFiles.warned = true; toast('เก็บไฟล์ของโปรเจกต์ไว้ในเครื่องไม่ได้ งานที่แก้ยังบันทึกอยู่ แต่เปิดโปรเจกต์ครั้งหน้าต้องลากไฟล์ซับเข้ามาใหม่'); } }
+  }
+  setTimeout(touchProj, 300);
+}
+function loadSamples() {
+  const T = tgtLang();
+  if (T === 'en') return;
+  SAMPLE.forEach(([n, t, s], i) => {
+    const [tt, st] = T === 'zh' ? [s, t] : [t, s];
+    const ep = makeEp(T === 'zh' ? n.replace('.srt', '_中文.srt') : n, tt, { sample: true });
+    const src = makeSrc(T === 'zh' ? n : n.replace('.srt', '_中文.srt'), st); src.sample = true;
+    S.srcs.push(src); ep.src = S.srcs.length - 1; S.eps.push(ep);
+  });
+  S.cur = 0; S.sel = { e: 0, c: 0 };
+}
+const VCACHE = new Map(); // videos stay in memory per project while the app is open, so switching back keeps them
+function resetWork(noSave) {
+  if (!noSave) flushDrafts(); else dq.clear();
+  clearTimeout(followJob); followJob = 0;
+  try { video.pause(); } catch (e) {}
+  if (video.getAttribute('src')) { video.removeAttribute('src'); delete video.dataset.url; try { video.load(); } catch (e) {} }
+  if (S.videos.length) VCACHE.set(S.pid, S.videos.map(v => v.file).filter(Boolean));
+  for (const v of S.videos) { try { URL.revokeObjectURL(v.url); } catch (e) {} }
+  S.eps = []; S.srcs = []; S.videos = []; S.books = []; S.audio.clear();
+  S.sel = null; S.cur = -1; S.playIdx = -1; S.stopAt = null; S.multi.clear(); S.anchor = null; S.drafts = null; S.folder = ''; S.filter = 'all';
+  document.querySelectorAll('#filt button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.f === 'all')));
+  HIST.length = 0; REDO.length = 0; $('bUndo').disabled = true;
+  AI.res = []; AI.pasteItems = null; xlsxQueue.length = 0; ASK.log = []; renderAsk();
+  lastOrient = '';
+  renderDraftBar();
+}
+async function openProject(id, opt = {}) {
+  if (id === S.pid && !opt.force) { closeM('mProj'); return; }
+  if (!opt.noSave) { saveNow(false); touchProj(); }
+  resetWork(opt.noSave);
+  S.pid = id; PJ.cur = id; saveProjects();
+  const pr = curProj();
+  S.cfg = Object.assign(cfgForTarget(pr.tgt, pr.src), store.get(pk('cfg'), null) || {});
+  S.cfg.tgt = pr.tgt || 'th'; S.cfg.src = pr.src || 'auto';
+  const g = store.get(pk('gloss'), null);
+  S.gloss = g && Array.isArray(g.list) ? g.list : []; S.glossName = g ? g.name || '' : ''; S.G = glossCompile(S.gloss);
+  S.aiRules = store.get(pk('aiRules'), null) || defaultRules(S.cfg.tgt);
+  if (opt.fresh && pr.client) { const c = getClient(pr.client); if (c) applyClient(c, true); }
+  saveSettings(); renderProjChip(); renderClientSel();
+  closeM('mProj');
+  loadSamples();
+  showPh(WELCOME);
+  renderAll(); updateTransport(); updateClock(true);
+  await restoreFiles();
+}
+async function restoreFiles() {
+  let recs = [];
+  try { recs = await PDB.listFiles(S.pid); } catch (e) {}
+  const pid = S.pid, vids = VCACHE.get(pid) || [];
+  if (!recs.length) return;
+  const files = recs.filter(r => r.kind === 'sub' || r.kind === 'book').sort((a, b) => nat(a.name, b.name)).map(r => new File([r.bytes], r.name));
+  const gens = recs.filter(r => r.kind === 'gen');
+  S.restoring = true;
+  try {
+    dropSamples();
+    if (files.length || vids.length) await addFiles(files.concat(vids), curProj().folder || '');
+    if (pid !== S.pid) return;
+    let n = 0;
+    for (const g of gens) {
+      if (S.eps.some(e => e.name === g.name)) continue;
+      const i = S.srcs.findIndex(x => x.name === g.srcName); if (i < 0) continue;
+      S.eps.push(makeGenEp(i)); n++;
+    }
+    if (n) { sortEps(); autoPair(); checkDrafts(); if (!S.sel && S.eps[0] && S.eps[0].cues.length) S.sel = { e: 0, c: 0 }; renderAll(); if (S.cur < 0 && S.eps.length) loadEpisode(0, 0, false); }
+  } finally { S.restoring = false; }
+  setSaveState(realEps().length ? 'saved' : 'none');
+}
+function newProjId() { return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5); }
+async function createProject(name, src, tgt, client) {
+  const id = newProjId();
+  PJ.list.push({ id, name, src, tgt, client: client || '', created: Date.now(), updated: Date.now(), eps: 0 });
+  saveProjects();
+  store.set('p:' + id + ':cfg', cfgForTarget(tgt, src));
+  store.set('p:' + id + ':aiRules', defaultRules(tgt));
+  await openProject(id, { fresh: true });
+  toast(`สร้างโปรเจกต์ ${name} แล้ว (${pairName(curProj())}) · ลากไฟล์ซับเข้ามาได้เลย`);
+}
+async function deleteProject(id) {
+  const pre = LS + 'p:' + id + ':', ks = [];
+  for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith(pre)) ks.push(k); }
+  ks.forEach(k => { try { localStorage.removeItem(k); } catch (e) {} });
+  try { await PDB.delProject(id); } catch (e) {}
+  PJ.list = PJ.list.filter(x => x.id !== id);
+  if (!PJ.list.length) { const nid = newProjId(); PJ.list.push({ id: nid, name: 'โปรเจกต์ใหม่', src: 'auto', tgt: 'th', client: '', created: Date.now(), updated: Date.now(), eps: 0 }); }
+  saveProjects();
+  if (id === S.pid) { const next = [...PJ.list].sort((a, b) => (b.updated || 0) - (a.updated || 0))[0]; await openProject(next.id, { force: true, noSave: true }); openProjWin(); }
+  else renderProjList();
+}
+async function exportProject(id) {
+  const pr = PJ.list.find(x => x.id === id); if (!pr) return;
+  if (id === S.pid) saveNow(false);
+  const pre = LS + 'p:' + id + ':', ls = {};
+  for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith(pre)) ls[k.slice(pre.length)] = localStorage.getItem(k); }
+  let files = []; try { files = await PDB.listFiles(id); } catch (e) {}
+  const out = { format: 'hfproj', v: 1, at: Date.now(), meta: Object.assign({}, pr), client: getClient(pr.client), ls,
+    files: files.map(f => ({ name: f.name, kind: f.kind, srcName: f.srcName, b64: b64enc(new Uint8Array(f.bytes)) })) };
+  await saveFile(safeName(pr.name) + '.hfproj', new TextEncoder().encode(JSON.stringify(out)), 'application/json');
+}
+async function importProject(f) {
+  let o = null; try { o = JSON.parse(await f.text()); } catch (e) {}
+  if (!o || o.format !== 'hfproj') { toast("ไฟล์นี้ไม่ใช่ไฟล์โปรเจกต์ของ Hell's Factory Studio (.hfproj)"); return; }
+  const id = newProjId();
+  const meta = Object.assign({ src: 'auto', tgt: 'th', client: '' }, o.meta || {}, { id, updated: Date.now() });
+  if (PJ.list.some(x => x.name === meta.name)) meta.name += ' (นำเข้า)';
+  if (o.client && o.client.id) { const cs = getClients(); if (!cs.some(c => c.id === o.client.id)) { cs.push(o.client); saveClients(cs); } meta.client = o.client.id; }
+  for (const [k, v] of Object.entries(o.ls || {})) { try { localStorage.setItem(LS + 'p:' + id + ':' + k, v); } catch (e) {} }
+  for (const fr of o.files || []) { try { await PDB.putFile(id, fr.name, fr.kind, b64dec(fr.b64), fr.srcName ? { srcName: fr.srcName } : null); } catch (e) {} }
+  PJ.list.push(meta); saveProjects();
+  await openProject(id);
+  toast(`นำเข้าโปรเจกต์ ${meta.name} แล้ว`);
+}
+function openProjWin() { renderProjList(); $('npClient').innerHTML = clientOpts(''); openM('mProj'); }
+function renderProjList() {
+  const list = [...PJ.list].sort((a, b) => (b.id === S.pid) - (a.id === S.pid) || (b.updated || 0) - (a.updated || 0));
+  $('pList').innerHTML = list.map(pr => {
+    const cl = getClient(pr.client), cur = pr.id === S.pid;
+    return `<div class="pitem${cur ? ' cur' : ''}" data-id="${pr.id}">
+      <div class="pi-main"><b class="pi-name" data-no-i18n>${esc(pr.name)}</b>${cur ? '<span class="badge">เปิดอยู่</span>' : ''}<span class="info">${esc(pairName(pr))} · ${esc(cl ? cl.name : 'ไม่ระบุลูกค้า')} · ${pr.eps || 0} ตอน · แก้ล่าสุด ${esc(fmtDate(pr.updated))}</span></div>
+      <div class="pi-act">${cur ? '' : '<button class="btn sm primary" type="button" data-act="open">เปิด</button>'}<button class="btn sm ghost" type="button" data-act="ren">เปลี่ยนชื่อ</button><button class="btn sm ghost" type="button" data-act="exp">ส่งออก</button><button class="btn sm ghost" type="button" data-act="del">ลบ</button></div></div>`;
+  }).join('');
+}
+$('pList').addEventListener('click', async e => {
+  const b = e.target.closest('button[data-act]'); if (!b) return;
+  const it = b.closest('.pitem'), id = it.dataset.id, pr = PJ.list.find(x => x.id === id);
+  if (b.dataset.act === 'open') openProject(id);
+  else if (b.dataset.act === 'exp') exportProject(id);
+  else if (b.dataset.act === 'ren') {
+    const nm = it.querySelector('.pi-name');
+    nm.outerHTML = `<span class="pi-ren"><input class="field sm" type="text" value="${esc(pr.name)}" aria-label="ชื่อโปรเจกต์"><button class="btn sm primary" type="button" data-act="renok">บันทึก</button></span>`;
+    const inp = it.querySelector('.pi-ren input'); inp.focus(); inp.select();
+    inp.addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); it.querySelector('[data-act=renok]').click(); } });
+  } else if (b.dataset.act === 'renok') {
+    const v = it.querySelector('.pi-ren input').value.trim(); if (v) { pr.name = v; saveProjects(); renderProjChip(); } renderProjList();
+  } else if (b.dataset.act === 'del') {
+    if (!b.classList.contains('confirm')) { b.classList.add('confirm'); b.textContent = 'กดอีกครั้งเพื่อลบถาวร'; setTimeout(() => { if (b.isConnected) { b.classList.remove('confirm'); b.textContent = 'ลบ'; } }, 4000); return; }
+    deleteProject(id);
+  }
+});
+$('npGo').onclick = () => {
+  const [src, tgt] = $('npPair').value.split('>');
+  const name = $('npName').value.trim() || `โปรเจกต์ ${PJ.list.length + 1}`;
+  $('npName').value = '';
+  createProject(name, src, tgt, $('npClient').value);
+};
+$('npName').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('npGo').click(); } });
+$('npImport').onclick = () => $('fProj').click();
+$('fProj').addEventListener('change', e => { const f = e.target.files[0]; e.target.value = ''; if (f) importProject(f); });
+$('bProj').onclick = openProjWin;
+
+/* ---------- clients (rules from each client's guide) ---------- */
+const getClients = () => store.get('clients', []) || [];
+const saveClients = l => store.set('clients', l);
+const getClient = id => id ? getClients().find(c => c.id === id) || null : null;
+const curClient = () => getClient(curProj().client);
+const clientOpts = sel => '<option value="">— ไม่ระบุลูกค้า —</option>' + getClients().map(c => `<option value="${c.id}"${c.id === sel ? ' selected' : ''}>${esc(c.name)}</option>`).join('');
+function renderClientSel() {
+  $('clientSel').innerHTML = clientOpts(curProj().client) + '<option value="__new">＋ เพิ่มลูกค้าจากไฟล์ guide…</option>' + (getClients().length ? '<option value="__manage">แก้ไข / จัดการลูกค้า…</option>' : '');
+  $('clientSel').value = curProj().client || '';
+  renderOrient();
+}
+$('clientSel').addEventListener('change', () => {
+  const v = $('clientSel').value;
+  if (v === '__new' || v === '__manage') { $('clientSel').value = curProj().client || ''; openGuide(v === '__new' ? '' : curProj().client || (getClients()[0] || {}).id || ''); return; }
+  setProjClient(v);
+});
+function setProjClient(id) {
+  const pr = curProj(); pr.client = id || ''; saveProjects();
+  const c = getClient(id);
+  if (c) applyClient(c);
+  renderProjChip(); renderClientSel();
+  toast(c ? `ใช้เกณฑ์ตามคู่มือของ ${c.name} แล้ว` : 'ไม่ผูกกับลูกค้าแล้ว (เกณฑ์ยังเหมือนเดิม ปรับเองได้)');
+}
+const CL_KEYS = ['mode', 'limit', 'maxLines', 'cpsMax', 'cpsMode', 'minDur', 'maxDur', 'punct', 'particles', 'denseN', 'era', 'bracket'];
+function videoOrient() { if (!epVideo(S.cur) || !video.videoWidth || !video.getAttribute('src')) return ''; return video.videoHeight > video.videoWidth ? 'v' : 'h'; }
+function applyClient(c) {
+  if (!c) return;
+  for (const k of CL_KEYS) if (c.cfg && c.cfg[k] != null && c.cfg[k] !== '') S.cfg[k] = c.cfg[k];
+  const o = videoOrient() || (c.orient === 'v' || c.orient === 'h' ? c.orient : '');
+  if (o === 'v' && c.limitV) S.cfg.limit = c.limitV;
+  else if (o === 'h' && c.limitH) S.cfg.limit = c.limitH;
+  else if (c.limitH || c.limitV) S.cfg.limit = c.limitH || c.limitV;
+  S.cfg.preset = 'custom';
+  saveSettings(); syncCrit(); requalify(); renderOrient();
+}
+function renderOrient() {
+  const c = curClient(), el = $('orient');
+  if (!c || !(c.limitH && c.limitV)) { el.hidden = true; return; }
+  const o = videoOrient();
+  el.hidden = false;
+  el.textContent = o ? `วิดีโอ${o === 'v' ? 'แนวตั้ง' : 'แนวนอน'} · ลิมิต ${o === 'v' ? c.limitV : c.limitH}` : `แนวนอน ${c.limitH} · แนวตั้ง ${c.limitV}`;
+  el.title = 'ลิมิตเปลี่ยนเองตามวิดีโอที่เปิด (ตามคู่มือลูกค้า)';
+}
+let lastOrient = '';
+function autoOrient() {
+  const c = curClient(), o = videoOrient();
+  if (!c || !o || o === lastOrient) { renderOrient(); return; }
+  lastOrient = o;
+  const lim = o === 'v' ? c.limitV : c.limitH;
+  if (lim && S.cfg.limit !== lim) { S.cfg.limit = lim; saveSettings(); syncCrit(); requalify(); toast(`วิดีโอ${o === 'v' ? 'แนวตั้ง' : 'แนวนอน'} ใช้ลิมิต ${lim} ตามคู่มือ ${c.name}`); }
+  renderOrient();
+}
+video.addEventListener('loadedmetadata', autoOrient);
+
+/* guide window: client guide files → AI → rules to review → saved client */
+const G = { files: [], id: '', cur: null };
+const GUIDE_EXT = new Set(['pdf', 'docx', 'xlsx', 'txt', 'md', 'png', 'jpg', 'jpeg', 'webp', 'csv']);
+function openGuide(id) {
+  G.id = id || ''; G.files = []; G.cur = null;
+  renderGuidePick(); renderGFiles(); $('gText').value = ''; $('gProg').textContent = '';
+  if (G.id) showClientForm(getClient(G.id)); else $('gStep2').hidden = true;
+  openM('mGuide');
+  provOptions($('gProv'), $('gModel'), AIX.getSel().provider);
+}
+function renderGuidePick() {
+  $('cuPick').innerHTML = '<option value="">＋ ลูกค้าใหม่</option>' + getClients().map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  $('cuPick').value = G.id; $('cuDel').hidden = !G.id;
+}
+$('cuPick').addEventListener('change', () => { G.id = $('cuPick').value; $('cuDel').hidden = !G.id; G.cur = null; if (G.id) showClientForm(getClient(G.id)); else $('gStep2').hidden = true; });
+$('cuDel').onclick = () => {
+  const b = $('cuDel');
+  if (!b.classList.contains('confirm')) { b.classList.add('confirm'); b.textContent = 'กดอีกครั้งเพื่อลบ'; setTimeout(() => { b.classList.remove('confirm'); b.textContent = 'ลบลูกค้านี้'; }, 4000); return; }
+  b.classList.remove('confirm'); b.textContent = 'ลบลูกค้านี้';
+  saveClients(getClients().filter(c => c.id !== G.id));
+  PJ.list.forEach(pr => { if (pr.client === G.id) pr.client = ''; }); saveProjects();
+  G.id = ''; renderGuidePick(); $('gStep2').hidden = true; renderClientSel(); renderProjChip();
+};
+function addGuideFiles(files) {
+  const ok = files.filter(f => GUIDE_EXT.has(extOf(f.name)));
+  if (!ok.length) { toast('รับไฟล์ PDF, Word (.docx), Excel, รูป และ txt'); return; }
+  for (const f of ok) if (!G.files.some(x => x.name === f.name && x.size === f.size)) G.files.push(f);
+  renderGFiles();
+}
+function renderGFiles() {
+  $('gFiles').innerHTML = G.files.map((f, i) => `<span class="fchip">${esc(f.name)} <small>${Math.max(1, Math.round(f.size / 1024))} KB</small><button type="button" data-rm="${i}" aria-label="เอาออก">✕</button></span>`).join('');
+}
+$('gFiles').addEventListener('click', e => { const b = e.target.closest('[data-rm]'); if (b) { G.files.splice(+b.dataset.rm, 1); renderGFiles(); } });
+$('gDrop').addEventListener('click', () => $('fGuide').click());
+$('gDrop').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('fGuide').click(); } });
+$('fGuide').addEventListener('change', e => { addGuideFiles([...e.target.files]); e.target.value = ''; });
+$('gProv').addEventListener('change', async () => { const p = $('gProv').value; if (p === '__conn') { closeM('mGuide'); openConn(); return; } AIX.setSel({ provider: p }); await modelOptions($('gModel'), p, AIX.getSel().model); });
+$('gModel').addEventListener('change', () => AIX.setSel({ model: $('gModel').value }));
+async function docxText(f) {
+  const ents = await zipList(f);
+  const doc = ents.find(x => x.name === 'word/document.xml'); if (!doc) return '';
+  const xml = await (await zipRead(f, doc)).text();
+  return xml.replace(/<w:tab\/>/g, '\t').replace(/<\/w:tc>/g, '\t').replace(/<\/w:p>|<w:br\/>/g, '\n').replace(/<[^>]+>/g, '')
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, '&').replace(/\n{3,}/g, '\n\n').trim();
+}
+async function xlsxText(f) {
+  const bk = await xlsxBook(f);
+  return bk.sheets.map(sh => `## ชีต ${sh.name || ''}\n` + sh.rows.slice(0, 3000).map(r => r.vals.map(v => String(v == null ? '' : v).replace(/\s+/g, ' ')).join('\t').replace(/\t+$/, '')).filter(Boolean).join('\n')).join('\n\n');
+}
+function guidePrompt(text, tgt) {
+  return `คุณคือผู้ช่วยอ่านคู่มือ (guide / style guide / 翻译规范 / 字幕要求) งานแปลซับไตเติ้ลของลูกค้า
+อ่านเอกสารทั้งหมดที่แนบมา รวมถึงตารางและข้อความที่อยู่ในรูปภาพ แล้วสรุปข้อกำหนดสำหรับงานแปลซับเป็นภาษา${TGT_NAME[tgt] || 'ไทย'}
+ถ้าคู่มือมีหลายภาษา ให้เอาเฉพาะส่วนที่ใช้กับภาษา${TGT_NAME[tgt] || 'ไทย'} (หรือส่วนที่ใช้กับทุกภาษา)
+
+ตอบเป็น JSON object เท่านั้น ห้ามมีข้อความอื่น ค่าไหนคู่มือไม่ได้บอกให้ใส่ null ห้ามเดา:
+{
+  "client": "ชื่อลูกค้า แพลตฟอร์ม หรือโปรเจกต์",
+  "target_lang": "th | zh | en",
+  "orientation": "horizontal | vertical | both | null",
+  "limit_horizontal": ตัวเลขตัวอักษรสูงสุดต่อบรรทัดของวิดีโอแนวนอน,
+  "limit_vertical": ตัวเลขตัวอักษรสูงสุดต่อบรรทัดของวิดีโอแนวตั้ง,
+  "count_mode": "len (นับทุกตัวรวมสระและวรรณยุกต์) | se (ไม่นับสระบน-ล่างและวรรณยุกต์) | null",
+  "max_lines": จำนวนบรรทัดสูงสุดต่อคิว,
+  "cps_max": ตัวอักษรต่อวินาทีสูงสุด,
+  "min_duration_sec": ความยาวคิวขั้นต่ำเป็นวินาที,
+  "max_duration_sec": ความยาวคิวสูงสุดเป็นวินาที,
+  "punctuation": "none (ห้ามใช้เครื่องหมายวรรคตอน) | keep (ใช้ได้) | null",
+  "polite_particles": "ban (ห้ามใส่หางเสียง) | minimal (ใส่ให้น้อย) | keep | null",
+  "bracket": "half ( ) | full （） | null",
+  "era_language": "modern | period | null",
+  "rules": ["ข้อกำหนดอื่นทั้งหมดเป็นข้อ ๆ ภาษาไทย สั้น ชัด เอาไปใช้ได้ทันที เช่น วิธีเขียนชื่อคน ค่าเงิน ตัวเลข 画面字 เสียงในใจ คำต้องห้าม การแบ่งบรรทัด ชื่อเรื่อง เรื่องย่อ ชื่อไฟล์ การส่งงาน"],
+  "glossary": [{"src": "คำต้นฉบับ", "t": "คำแปลที่คู่มือกำหนด"}],
+  "unclear": ["จุดที่คู่มือเขียนไม่ชัด ขัดกันเอง หรือควรถาม PM"]
+}
+${text ? `\nเนื้อหาจากไฟล์ที่เป็นข้อความ:\n${text}` : ''}`;
+}
+function clientFromAI(o) {
+  if (Array.isArray(o)) o = o[0];
+  o = o || {};
+  const num = v => { const n = parseFloat(v); return isFinite(n) && n > 0 ? n : null; };
+  const tgt = ['th', 'zh', 'en'].includes(o.target_lang) ? o.target_lang : tgtLang();
+  const cfg = {};
+  if (o.count_mode === 'se' || o.count_mode === 'len') cfg.mode = o.count_mode;
+  if (num(o.max_lines)) cfg.maxLines = Math.round(num(o.max_lines));
+  if (num(o.cps_max)) cfg.cpsMax = num(o.cps_max);
+  if (num(o.min_duration_sec)) cfg.minDur = Math.round(num(o.min_duration_sec) * 1000);
+  if (num(o.max_duration_sec)) cfg.maxDur = Math.round(num(o.max_duration_sec) * 1000);
+  if (o.punctuation === 'none') cfg.punct = 'strict'; else if (o.punctuation === 'keep') cfg.punct = 'off';
+  if (o.polite_particles === 'ban') cfg.particles = 'ban'; else if (o.polite_particles === 'minimal') cfg.particles = 'dense'; else if (o.polite_particles === 'keep') cfg.particles = 'off';
+  if (o.bracket === 'half' || o.bracket === 'full') cfg.bracket = o.bracket;
+  if (o.era_language === 'modern' || o.era_language === 'period') cfg.era = o.era_language;
+  const limitH = num(o.limit_horizontal) ? Math.round(num(o.limit_horizontal)) : null, limitV = num(o.limit_vertical) ? Math.round(num(o.limit_vertical)) : null;
+  const orient = o.orientation === 'vertical' ? 'v' : o.orientation === 'horizontal' ? 'h' : o.orientation === 'both' ? 'both' : '';
+  const rules = (Array.isArray(o.rules) ? o.rules : String(o.rules || '').split('\n')).map(x => String(x).replace(/^[-•*\s]+/, '').trim()).filter(Boolean).map(x => '- ' + x).join('\n');
+  const gloss = (Array.isArray(o.glossary) ? o.glossary : []).map(g => ({ src: String((g && g.src) || '').trim(), th: String((g && (g.t || g.th || g.target)) || '').trim() })).filter(g => g.src && g.th);
+  const prev = G.id ? getClient(G.id) : null;
+  return { id: G.id || '', name: String(o.client || '').trim() || (prev && prev.name) || (G.files[0] ? G.files[0].name.replace(/\.[^.]+$/, '') : 'ลูกค้าใหม่'), tgt, cfg, limitH, limitV, orient, rules, gloss,
+    unclear: (Array.isArray(o.unclear) ? o.unclear : []).map(String).filter(Boolean), files: G.files.map(f => f.name).concat(prev ? prev.files || [] : []) };
+}
+$('gGo').onclick = async () => {
+  const prov = $('gProv').value, model = $('gModel').value;
+  if (!prov || prov === '__conn') { closeM('mGuide'); openConn(); return; }
+  if (!G.files.length && !$('gText').value.trim()) { $('gProg').textContent = 'ใส่ไฟล์ guide หรือวางข้อความก่อน'; return; }
+  $('gGo').disabled = true; $('gProg').textContent = 'กำลังเปิดไฟล์…';
+  try {
+    const texts = [], att = [];
+    for (const f of G.files) {
+      const x = extOf(f.name);
+      if (x === 'pdf') att.push({ name: f.name, mime: 'application/pdf', blob: f });
+      else if (['png', 'jpg', 'jpeg', 'webp'].includes(x)) att.push({ name: f.name, mime: f.type || 'image/' + (x === 'jpg' ? 'jpeg' : x), blob: f });
+      else if (x === 'docx') texts.push(`# ไฟล์ ${f.name}\n` + await docxText(f));
+      else if (x === 'xlsx') texts.push(`# ไฟล์ ${f.name}\n` + await xlsxText(f));
+      else texts.push(`# ไฟล์ ${f.name}\n` + (await f.text()).slice(0, 80000));
+    }
+    if ($('gText').value.trim()) texts.push('# ข้อความเพิ่มเติม\n' + $('gText').value.trim());
+    $('gProg').textContent = `${$('gProv').selectedOptions[0].textContent} กำลังอ่านคู่มือ (ไฟล์ใหญ่อาจใช้เวลา 1-2 นาที)…`;
+    const tgt = (G.id && getClient(G.id) && getClient(G.id).tgt) || tgtLang();
+    const out = await AIX.chat({ provider: prov, model, prompt: guidePrompt(texts.join('\n\n').slice(0, 200000), tgt), files: att, json: true, maxTokens: 12000 });
+    showClientForm(clientFromAI(out));
+    $('gProg').textContent = 'อ่านเสร็จแล้ว ตรวจกฎด้านล่าง แก้ได้ทุกช่อง แล้วกดบันทึก';
+  } catch (e) { $('gProg').textContent = aiErr(e, prov); }
+  finally { $('gGo').disabled = false; }
+};
+$('gManual').onclick = () => {
+  const c = G.id ? getClient(G.id) : null;
+  showClientForm(c || { id: '', name: '', tgt: tgtLang(), cfg: Object.fromEntries(CL_KEYS.map(k => [k, S.cfg[k]])), limitH: S.cfg.limit, limitV: null, orient: '', rules: '', gloss: [], unclear: [], files: [] });
+};
+const CU_FIELDS = [
+  ['orient', 'วิดีโอของงานนี้', 'sel', [['', 'ไม่ระบุ'], ['h', 'แนวนอน'], ['v', 'แนวตั้ง'], ['both', 'มีทั้งแนวนอนและแนวตั้ง']]],
+  ['limitH', 'ลิมิตต่อบรรทัด · แนวนอน', 'num'],
+  ['limitV', 'ลิมิตต่อบรรทัด · แนวตั้ง', 'num'],
+  ['mode', 'นับตัวอักษรแบบ', 'sel', [['len', 'len (นับทุกตัว)'], ['se', 'SE (ไม่นับสระบน-ล่าง/วรรณยุกต์)']], 'th'],
+  ['maxLines', 'บรรทัดสูงสุดต่อคิว', 'num'],
+  ['cpsMax', 'CPS สูงสุด (0 = ไม่ตรวจ)', 'num'],
+  ['minDur', 'คิวสั้นสุด วินาที (0 = ไม่ตรวจ)', 'sec'],
+  ['maxDur', 'คิวยาวสุด วินาที (0 = ไม่ตรวจ)', 'sec'],
+  ['punct', 'เครื่องหมายวรรคตอน', 'sel', [['strict', 'ห้ามใช้'], ['off', 'ใช้ได้ / ไม่ตรวจ']]],
+  ['particles', 'หางเสียง', 'sel', [['dense', 'ใส่ให้น้อย (เตือนเมื่อติดกัน)'], ['ban', 'ห้ามมีเลย'], ['off', 'ไม่ตรวจ']], 'th'],
+  ['bracket', 'ชนิดวงเล็บ', 'sel', [['half', 'ครึ่งความกว้าง ( )'], ['full', 'เต็มความกว้าง （）'], ['off', 'ไม่ตรวจ']]],
+  ['era', 'ยุคของเรื่อง', 'sel', [['off', 'ไม่ตรวจ'], ['modern', 'ปัจจุบัน'], ['period', 'ย้อนยุค']], 'th']
+];
+const TOP_KEYS = new Set(['orient', 'limitH', 'limitV']);
+function showClientForm(c) {
+  if (!c) return;
+  G.cur = JSON.parse(JSON.stringify(c));
+  $('gStep2').hidden = false;
+  $('cuName').value = c.name || '';
+  $('cuTgt').value = c.tgt || tgtLang();
+  const val = k => TOP_KEYS.has(k) ? c[k] : (c.cfg || {})[k];
+  $('cuForm').innerHTML = CU_FIELDS.map(([k, lab, type, opts, only]) => {
+    const v = val(k), oc = only ? ` data-only="${only}"` : '';
+    if (type === 'sel') return `<label${oc}>${esc(lab)}<select class="field sm" data-cu="${k}"><option value="">${k === 'orient' ? 'ไม่ระบุ' : '— ไม่ระบุ (ใช้เกณฑ์เดิม) —'}</option>${opts.filter(o => o[0] !== '').map(([ov, n]) => `<option value="${ov}"${v === ov ? ' selected' : ''}>${esc(n)}</option>`).join('')}</select></label>`;
+    const shown = v == null || v === '' ? '' : type === 'sec' ? v / 1000 : v;
+    return `<label${oc}>${esc(lab)}<input class="field sm" type="number" min="0" step="${type === 'sec' ? 0.01 : 1}" data-cu="${k}" data-type="${type}" value="${shown}" placeholder="ไม่ระบุ"></label>`;
+  }).join('');
+  syncCuTgt();
+  $('cuRules').value = c.rules || '';
+  $('cuGloss').innerHTML = c.gloss && c.gloss.length ? `<label class="chk"><input type="checkbox" id="cuGlossAdd" checked> เจอศัพท์ในคู่มือ ${c.gloss.length} คำ เพิ่มเข้า术语表ของโปรเจกต์ตอนกด "ใช้กับโปรเจกต์นี้"</label><div class="tbl"><table><tbody>${c.gloss.slice(0, 8).map(g => `<tr><td>${esc(g.src)}</td><td>${esc(g.th)}</td></tr>`).join('')}${c.gloss.length > 8 ? `<tr><td colspan="2" class="info">และอีก ${c.gloss.length - 8} คำ</td></tr>` : ''}</tbody></table></div>` : '';
+  $('cuUnclear').innerHTML = c.unclear && c.unclear.length ? `<div class="unclear"><b>จุดที่คู่มือไม่ชัด ควรถาม PM</b><ul>${c.unclear.map(u => `<li>${esc(u)}</li>`).join('')}</ul></div>` : '';
+  $('gStep2').scrollIntoView({ block: 'start', behavior: 'smooth' });
+}
+function syncCuTgt() { const t = $('cuTgt').value; $('cuForm').querySelectorAll('[data-only]').forEach(l => { l.hidden = l.dataset.only !== t; }); }
+$('cuTgt').addEventListener('change', syncCuTgt);
+function readClientForm() {
+  const c = Object.assign({}, G.cur || {}, { name: $('cuName').value.trim(), tgt: $('cuTgt').value, rules: $('cuRules').value.trim(), cfg: {} });
+  $('cuForm').querySelectorAll('[data-cu]').forEach(el => {
+    const k = el.dataset.cu, ty = el.dataset.type; let v = el.value;
+    if (el.closest('label').hidden) v = '';
+    if (ty) v = v === '' ? null : ty === 'sec' ? Math.round(parseFloat(v) * 1000) : parseFloat(v);
+    else if (v === '') v = null;
+    if (v != null && typeof v === 'number' && !isFinite(v)) v = null;
+    if (TOP_KEYS.has(k)) c[k] = v; else if (v != null) c.cfg[k] = v;
+  });
+  if (!c.cfg.limit && (c.limitH || c.limitV)) c.cfg.limit = c.limitH || c.limitV;
+  return c;
+}
+function saveClientForm() {
+  const c = readClientForm();
+  if (!c.name) { toast('ใส่ชื่อลูกค้าก่อน'); $('cuName').focus(); return null; }
+  const list = getClients();
+  if (!c.id) c.id = 'c' + Date.now().toString(36);
+  c.updated = Date.now();
+  const i = list.findIndex(x => x.id === c.id);
+  if (i >= 0) list[i] = c; else list.push(c);
+  saveClients(list); G.id = c.id; G.cur = c; renderGuidePick(); renderClientSel(); renderProjChip();
+  return c;
+}
+$('cuSave').onclick = () => { const c = saveClientForm(); if (!c) return; toast(`บันทึกลูกค้า ${c.name} แล้ว`); if (curProj().client === c.id) applyClient(c); };
+$('cuUse').onclick = () => {
+  const c = saveClientForm(); if (!c) return;
+  if ($('cuGlossAdd') && $('cuGlossAdd').checked && c.gloss && c.gloss.length) {
+    const have = new Set(S.gloss.map(g => g.src));
+    const add = c.gloss.filter(g => !have.has(g.src));
+    if (add.length) setGloss(S.gloss.concat(add), S.glossName ? S.glossName + ' + ' + c.name : 'คู่มือ ' + c.name);
+  }
+  if (c.tgt && c.tgt !== tgtLang()) toast(`หมายเหตุ: ลูกค้านี้แปลเป็นภาษา${TGT_NAME[c.tgt]} แต่โปรเจกต์นี้เป็น${pairName(curProj())}`);
+  setProjClient(c.id); closeM('mGuide');
+};
+$('cuBack').onclick = () => { $('gStep2').hidden = true; $('gStep1').scrollIntoView({ block: 'start', behavior: 'smooth' }); };
+$('bClients').onclick = () => { closeMenus(); openGuide(curProj().client || ''); };
+
+/* ---------- ask AI: a side panel assistant that knows the current cue ---------- */
+const ASK = { log: [], busy: false, ctl: null, key: '' };
+function askContext() {
+  const c = curCue(), ep = S.sel ? S.eps[S.sel.e] : null;
+  if (!c || !ep || ep.sample) return null;
+  const prev = ep.cues[S.sel.c - 1], next = ep.cues[S.sel.c + 1];
+  return { ep, c, src: srcTextOf(ep, c), prevT: prev ? prev.t : '', prevS: prev ? srcTextOf(ep, prev) : '', nextT: next ? next.t : '', nextS: next ? srcTextOf(ep, next) : '' };
+}
+function askSelected() {
+  if (document.activeElement === ta && ta.selectionEnd > ta.selectionStart) return ta.value.slice(ta.selectionStart, ta.selectionEnd).trim();
+  const s = String(window.getSelection ? window.getSelection() : '').trim();
+  return s.length <= 80 ? s : '';
+}
+let askSel = '';
+document.addEventListener('selectionchange', () => { const s = askSelected(); if (s) askSel = s; });
+function renderAskCtx() {
+  const x = askContext();
+  $('askCtx').innerHTML = x ? `<div><b>${esc(x.ep.label)} · คิว ${S.sel.c + 1}</b></div>${x.src ? `<div class="ac-src">${esc(x.src)}</div>` : ''}<div class="ac-t">${esc(x.c.t) || '<span class="empty">(ว่าง)</span>'}</div>` : '<span class="info">เลือกคิวจากรายการ แล้วถามได้เลย หรือพิมพ์ถามเรื่องไหนก็ได้</span>';
+  $('askSel').textContent = askSel ? `คำที่เลือก: ${askSel}` : 'ลากคลุมคำในคิวหรือใน原文 เพื่อถามเฉพาะคำนั้น';
+}
+function renderAsk() {
+  const box = $('askLog'); if (!box) return;
+  box.innerHTML = ASK.log.map((m, i) => m.role === 'user' ? `<div class="msg me">${esc(m.show || m.content)}</div>`
+    : `<div class="msg ai">${m.content.split('\n').map(l => { const o = l.match(/^\s*»\s*(.+)$/); return o ? `<div class="opt"><span>${esc(o[1])}</span><button class="btn sm" type="button" data-use="${esc(o[1])}">ใช้</button></div>` : `<div>${esc(l) || '&nbsp;'}</div>`; }).join('')}</div>`).join('') + (ASK.busy ? '<div class="msg ai busy">กำลังคิด…</div>' : '');
+  box.scrollTop = box.scrollHeight;
+}
+function openAsk() { $('askPanel').hidden = false; document.body.classList.add('asking'); renderAskCtx(); renderAsk(); provOptions($('askProv'), $('askModel'), AIX.getSel().provider); setTimeout(() => $('askIn').focus(), 0); layoutOverlay(); }
+function closeAsk() { $('askPanel').hidden = true; document.body.classList.remove('asking'); layoutOverlay(); }
+async function askSend(q, show) {
+  q = String(q || '').trim(); if (!q || ASK.busy) return;
+  const prov = $('askProv').value, model = $('askModel').value;
+  if (!prov || prov === '__conn') { openConn(); return; }
+  const x = askContext(), cl = curClient(), T = TGT_LABEL();
+  const ctx = x ? `บริบทตอนนี้ (${x.ep.label} คิว ${S.sel.c + 1}):
+${x.prevS || x.prevT ? `คิวก่อนหน้า: 原文「${x.prevS}」 คำแปล「${x.prevT}」\n` : ''}คิวนี้: 原文「${x.src}」 คำแปล${T}「${x.c.t}」
+${x.nextS || x.nextT ? `คิวถัดไป: 原文「${x.nextS}」 คำแปล「${x.nextT}」\n` : ''}` : '';
+  const gl = x && x.src ? S.G.filter(g => g.lat ? g.rx.test(x.src) : x.src.includes(g.src)).slice(0, 40) : [];
+  const system = `คุณคือผู้ช่วยนักแปลซับไตเติ้ล (ต้นฉบับ → ${T}) ของ Hell's Factory ตอบเป็นภาษาไทย สั้น ตรงประเด็น เป็นกันเอง
+- ถ้าถามความหมายคำ: บอกความหมาย คำอ่าน (พินอินถ้าเป็นจีน) และคำแปล${T}ที่เหมาะกับบริบทนี้
+- ถ้าเสนอคำแปลให้เลือก: ใส่แต่ละตัวเลือกเป็นบรรทัดเดียว ขึ้นต้นด้วย "» " ตามด้วยข้อความทั้งคิวที่ใช้แทนได้ทันที (ไม่มีเครื่องหมายคำพูด ไม่มีคำอธิบายในบรรทัดเดียวกัน) แล้วอธิบายสั้น ๆ บรรทัดถัดไป
+- คำแปลที่เสนอต้องทำตามเกณฑ์: แต่ละบรรทัดไม่เกิน ${S.cfg.limit} ตัวอักษร ไม่เกิน ${S.cfg.maxLines} บรรทัด${S.cfg.punct === 'strict' && tgtLang() === 'th' ? ' ห้ามใช้ ! ? … , . " ;' : ''}${S.cfg.particles === 'ban' ? ' ห้ามมีหางเสียง' : ''}
+${cl && cl.rules ? `กฎของลูกค้า ${cl.name}:\n${cl.rules}\n` : ''}กฎทั่วไปของงาน:\n${S.aiRules}${gl.length ? `\n术语表ที่เกี่ยวข้อง:\n${gl.map(g => `${g.src} = ${g.th}`).join('\n')}` : ''}`;
+  const hist = ASK.log.filter(m => !m.err).slice(-10).map(m => ({ role: m.role, content: m.content }));
+  ASK.log.push({ role: 'user', content: (ctx ? ctx + '\n' : '') + 'คำถาม: ' + q, show: show || q });
+  ASK.busy = true; renderAsk(); $('askIn').value = '';
+  ASK.ctl = new AbortController();
+  try {
+    const ans = await AIX.chat({ provider: prov, model, system, prompt: ASK.log[ASK.log.length - 1].content, history: hist, json: false, signal: ASK.ctl.signal, maxTokens: 2000 });
+    ASK.log.push({ role: 'assistant', content: String(ans || '').trim() || '(ไม่มีคำตอบ)' });
+  } catch (e) { ASK.log.push({ role: 'assistant', content: aiErr(e, prov), err: true }); }
+  finally { ASK.busy = false; ASK.ctl = null; renderAsk(); }
+}
+$('askLog').addEventListener('click', e => {
+  const b = e.target.closest('[data-use]'); if (!b) return;
+  if (!S.sel || !curCue()) { toast('เลือกคิวที่จะใส่ก่อน'); return; }
+  const v = b.dataset.use.replace(/\\n|\\N/g, '\n').replace(/\s*\/\s*/g, m => m.includes('\n') ? m : m);
+  batchText(() => v, 'ใช้คำแปลจาก AI', [[S.sel.e, S.sel.c]]);
+  toast('ใส่คำแปลนี้แล้ว', { label: 'เลิกทำ', fn: undo });
+});
+$('askQuick').addEventListener('click', e => {
+  const b = e.target.closest('button[data-q]'); if (!b) return;
+  const w = askSel, k = b.dataset.q;
+  if (k === 'word') { if (!w) { toast('ลากคลุมคำที่อยากรู้ในคิวหรือใน原文ก่อน'); return; } askSend(`「${w}」 ในประโยคนี้แปลว่าอะไร ใช้คำ${TGT_LABEL()}ว่าอะไรดี`, `คำนี้แปลว่าอะไร: ${w}`); }
+  else if (k === 'alt') askSend(`ขอคำแปลของคิวนี้แบบอื่น 3 แบบ (สั้นลง / ธรรมชาติขึ้น / ใกล้ต้นฉบับ) พร้อมบอกว่าแต่ละแบบต่างกันยังไง`, 'ขอคำแปลแบบอื่น');
+  else if (k === 'check') askSend('คำแปลคิวนี้ถูกต้อง ครบ และลื่นไหลไหม ถ้าแปลกหรือผิดตรงไหน บอกเหตุผลและเสนอคำแปลที่ดีกว่า', 'ประโยคนี้แปลกไหม');
+  else if (k === 'explain') askSend('อธิบาย原文ของคิวนี้ให้เข้าใจง่าย (ความหมาย สำนวน คำแสลง มุก หรือบริบททางวัฒนธรรม)', 'อธิบาย原文');
+});
+$('askGo').onclick = () => askSend($('askIn').value);
+$('askIn').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); askSend($('askIn').value); } });
+$('askClear').onclick = () => { ASK.log = []; renderAsk(); };
+$('askClose').onclick = closeAsk;
+$('bAsk').onclick = () => { if ($('askPanel').hidden) openAsk(); else { renderAskCtx(); $('askIn').focus(); } };
+$('askProv').addEventListener('change', async () => { const p = $('askProv').value; if (p === '__conn') { openConn(); return; } AIX.setSel({ provider: p }); await modelOptions($('askModel'), p, AIX.getSel().model); });
+$('askModel').addEventListener('change', () => AIX.setSel({ model: $('askModel').value }));
+
+/* ---------- menus ---------- */
+function closeMenus() { document.querySelectorAll('.menu').forEach(m => { if (!m.hidden) { m.hidden = true; const b = m.parentElement.querySelector('[aria-expanded]'); if (b) b.setAttribute('aria-expanded', 'false'); } }); }
+function menu(btnId, menuId) {
+  const b = $(btnId), m = $(menuId);
+  b.addEventListener('click', e => { e.stopPropagation(); const open = m.hidden; closeMenus(); m.hidden = !open; b.setAttribute('aria-expanded', String(open)); if (open) { const f = m.querySelector('button, input, select'); if (f) f.focus(); } });
+  m.addEventListener('click', e => { if (e.target.closest('button[role=menuitem]')) closeMenus(); });
+}
+menu('bOpen', 'mnOpen'); menu('bMenu', 'mnMain'); menu('bPlayOpt', 'mnPlay');
+document.addEventListener('click', e => { if (!e.target.closest('.menu') && !e.target.closest('[aria-haspopup]')) closeMenus(); });
+$('tRep').onclick = () => { const on = $('repRow').hidden; $('repRow').hidden = !on; $('tRep').setAttribute('aria-pressed', String(on)); if (on) $('r').focus(); };
+$('qaAISpell').onclick = () => { closeM('mQA'); openAI('spell', 'all'); };
+
+/* ---------- 术语表 editor ---------- */
+let glQ = '';
+function renderGlossEd() {
+  const q = glQ.trim().toLowerCase();
+  const rows = []; for (let i = 0; i < S.gloss.length && rows.length < 300; i++) { const g = S.gloss[i]; if (!q || (g.src + ' ' + g.th).toLowerCase().includes(q)) rows.push(i); }
+  $('gPrev').innerHTML = `<div class="gl-tools"><input class="field sm grow" id="glQ" type="search" placeholder="ค้นหาศัพท์" value="${esc(glQ)}" aria-label="ค้นหาศัพท์"><button class="btn sm" type="button" id="glAdd">＋ เพิ่มคำ</button><button class="btn sm" type="button" id="glExp"${S.gloss.length ? '' : ' disabled'}>ส่งออก .xlsx</button></div>`
+    + (S.gloss.length ? `<table class="gl-ed"><thead><tr><th>原文</th><th>คำแปล</th><th></th></tr></thead><tbody>${rows.map(i => `<tr><td><input class="field sm" data-gi="${i}" data-gk="src" value="${esc(S.gloss[i].src)}" aria-label="原文"></td><td><input class="field sm" data-gi="${i}" data-gk="th" value="${esc(S.gloss[i].th)}" aria-label="คำแปล"></td><td><button class="btn sm ghost" type="button" data-gdel="${i}" aria-label="ลบคำนี้">✕</button></td></tr>`).join('')}</tbody></table>${rows.length >= 300 ? '<p class="info">แสดง 300 คำแรก ใช้ช่องค้นหาเพื่อหาคำอื่น</p>' : ''}` : '');
+}
+$('gPrev').addEventListener('input', e => { if (e.target.id === 'glQ') { glQ = e.target.value; const pos = e.target.selectionStart; renderGlossEd(); const n = $('glQ'); n.focus(); n.setSelectionRange(pos, pos); } });
+$('gPrev').addEventListener('change', e => {
+  const t = e.target; if (t.dataset.gi == null) return;
+  S.gloss[+t.dataset.gi][t.dataset.gk] = t.value.trim();
+  S.glossName = S.glossName || 'แก้ในโปรแกรม'; S.G = glossCompile(S.gloss);
+  store.set(pk('gloss'), { name: S.glossName, list: S.gloss.filter(g => g.src || g.th) });
+  $('gInfo').textContent = `ใช้อยู่ ${S.gloss.filter(g => g.src && g.th).length} คำ · แก้แล้วบันทึกทันที`; requalify();
+});
+$('gPrev').addEventListener('click', async e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.id === 'glAdd') { S.gloss.unshift({ src: '', th: '' }); glQ = ''; renderGlossEd(); const f = $('gPrev').querySelector('input[data-gk=src]'); if (f) f.focus(); return; }
+  if (b.dataset.gdel != null) { S.gloss.splice(+b.dataset.gdel, 1); setGloss(S.gloss, S.glossName); return; }
+  if (b.id === 'glExp') {
+    const rows = [[{ v: '原文', s: 1 }, { v: '译文', s: 1 }]].concat(S.gloss.filter(g => g.src && g.th).map(g => [{ v: g.src }, { v: g.th }]));
+    await saveFile(safeName((S.glossName || curProj().name).replace(/\.[^.]+$/, '')) + '_术语表.xlsx', xlsxNew('术语表', rows, [30, 40]), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  }
+});
+
+/* ---------- Excel export of every cue ---------- */
+function xlBook(eps, per, withIss) {
+  const H = ['ตอน 集', 'ไฟล์ 文件', '# 序号', 'เริ่ม 开始', 'จบ 结束', '原文', 'คำแปลเดิม 原译文', 'คำแปล 译文', '是否修改'].concat(withIss ? ['ปัญหาที่ตรวจเจอ 问题'] : []);
+  const W = [9, 26, 7, 14, 14, 38, 38, 38, 9].concat(withIss ? [40] : []);
+  const head = H.map(v => ({ v, s: 1 }));
+  const rowsOf = ep => {
+    ensureQA(S.eps.indexOf(ep));
+    return ep.cues.map((c, i) => {
+      const ed = isEdited(c), st = ed ? 2 : 0;
+      const r = [ep.label, ep.kind === 'xlsx' ? ep.key : ep.name, (!ep.struct && c.idx) || i + 1, ep.noTime ? '' : c.s, ep.noTime ? '' : c.e, srcTextOf(ep, c), c.oT == null ? '' : c.oT, c.t, ed ? '是' : '否'];
+      if (withIss) r.push(Q(c).iss.filter(x => x.sev !== 'i').map(x => x.msg).join('; '));
+      return r.map(v => ({ v: v == null ? '' : v, s: st }));
+    });
+  };
+  if (per) return xlsxMulti(eps.map(ep => ({ name: ep.label, rows: [head].concat(rowsOf(ep)), widths: W })));
+  return xlsxMulti([{ name: 'ซับทุกตอน', rows: [head].concat(...eps.map(rowsOf)), widths: W }]);
+}
+
 /* ---------- start ---------- */
 window.__hfState = () => S; // read-only peek for automated tests
 setSaveState('none');
@@ -1864,15 +2627,15 @@ document.addEventListener('visibilitychange', () => { if (document.hidden) saveN
 $('oNext').checked = S.view.autoNext; $('oFollow').checked = S.view.follow; $('oOv').checked = S.view.overlay; $('oOvColor').checked = S.view.ovColor; $('oClickPlay').checked = S.view.clickPlay;
 $('oPos').value = S.view.subPos; cap.style.bottom = S.view.subPos + '%';
 $('rate').value = String(S.view.rate);
+if ($('rate').value !== String(S.view.rate)) { S.view.rate = 1; $('rate').value = '1'; }
+video.defaultPlaybackRate = S.view.rate; video.playbackRate = S.view.rate;
 $('tSrc').setAttribute('aria-pressed', String(S.view.showSrc));
 if (S.view.left) $('main').style.setProperty('--left', S.view.left + 'px');
-SAMPLE.forEach(([n, t, s], i) => {
-  const ep = makeEp(n, t, { sample: true });
-  const src = makeSrc(n.replace('.srt', '_中文.srt'), s); src.sample = true;
-  S.srcs.push(src); ep.src = i; S.eps.push(ep);
-});
-S.cur = 0; S.sel = { e: 0, c: 0 };
+loadSamples();
 showPh(WELCOME);
 syncThemeBtn();
-renderAll(); updateTransport(); updateClock();
+renderProjChip(); renderClientSel();
+renderAll(); updateTransport(); updateClock(true);
+restoreFiles();
+PDB.persist();
 })();

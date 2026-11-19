@@ -6,46 +6,57 @@
 <script>window.__errs=[];addEventListener("error",e=>window.__errs.push(String(e.message||e)));addEventListener("unhandledrejection",e=>window.__errs.push(String(e.reason&&e.reason.message||e.reason)));</script>
 <title>Hell's Factory Studio</title>
 <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-
 </head>
 <body>
-<header class="top win">
-  <div class="tbar"><svg class="spark" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 0 L12 8 L20 10 L12 12 L10 20 L8 12 L0 10 L8 8 Z" fill="currentColor"/></svg><span class="ttl">HELL'S FACTORY · SUB STUDIO</span><span class="tsub">ตรวจซับรวมตอน</span><span class="tdots" aria-hidden="true"><i></i><i></i><i></i></span></div>
-  <div class="tbody">
-  <div class="grp">
-    <button class="btn" id="bDir" type="button">เปิดโฟลเดอร์</button>
-    <button class="btn" id="bFiles" type="button">เลือกไฟล์ / zip / rar</button>
-    <button class="btn" id="bPair" type="button">จับคู่ไฟล์</button>
-    <button class="btn" id="bGloss" type="button">术语表</button>
-  </div>
-  <div class="grp crit">
-    <select id="preset" class="field sm" aria-label="ชุดเกณฑ์ของลูกค้า"></select>
-    <div class="seg" id="modeSeg" role="group" aria-label="วิธีนับตัวอักษร">
-      <button type="button" data-m="se" title="ไม่นับสระบน-ล่างและวรรณยุกต์">SE</button>
-      <button type="button" data-m="len" title="นับทุกตัว รวมสระ วรรณยุกต์ และช่องว่าง">len</button>
+<header class="appbar">
+  <div class="brand" aria-label="Hell's Factory Studio"><svg class="spark" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 0 L12 8 L20 10 L12 12 L10 20 L8 12 L0 10 L8 8 Z" fill="currentColor"/></svg><span class="logo">HELL'S FACTORY</span><span class="logo-sub">STUDIO</span></div>
+  <button class="projbtn" id="bProj" type="button" title="โปรเจกต์ทั้งหมด (Ctrl+Shift+P)"><span class="pj-txt"><span class="pj-name" id="pjName" data-no-i18n>โปรเจกต์</span><span class="pj-meta" id="pjMeta"></span></span><svg class="caret" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 4.5 6 8.5 10 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+  <span class="savest" id="saveState" role="status" aria-live="polite"></span>
+  <div class="spacer"></div>
+  <div class="menuwrap">
+    <button class="btn" id="bOpen" type="button" aria-haspopup="menu" aria-expanded="false">เปิดไฟล์ <svg class="caret" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 4.5 6 8.5 10 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+    <div class="menu" id="mnOpen" role="menu" hidden>
+      <button type="button" role="menuitem" id="bFiles">เลือกไฟล์ / zip / rar<kbd>Ctrl+O</kbd></button>
+      <button type="button" role="menuitem" id="bDir">เปิดโฟลเดอร์<kbd>Ctrl+Shift+O</kbd></button>
+      <hr>
+      <button type="button" role="menuitem" id="bPair">จับคู่ไฟล์ (ซับ · 原文 · วิดีโอ)</button>
+      <button type="button" role="menuitem" id="bGloss">术语表<kbd>Ctrl+G</kbd></button>
     </div>
-    <label class="lbl" for="limit">ลิมิต <input id="limit" class="field num sm" type="number" min="1" max="200"></label>
-    <label class="lbl" for="era">ยุค <select id="era" class="field sm"><option value="off">ไม่ตรวจ</option><option value="modern">ปัจจุบัน</option><option value="period">ย้อนยุค</option></select></label>
-    <button class="btn sm" id="bCfg" type="button">เกณฑ์ทั้งหมด…</button>
   </div>
-  <span class="pill savest" id="saveState" role="status" aria-live="polite"></span>
-  <div class="stats" id="stats"></div>
-  <button class="btn sm" id="bKeys" type="button" title="คีย์ลัดทั้งหมด (F1)">คีย์ลัด</button>
-  <button class="btn blue" id="bAI" type="button">AI ช่วยแปล/ตรวจ</button>
-  <button class="btn yellow" id="bQA" type="button">ตรวจงาน</button>
-  <button class="btn primary" id="bExport" type="button">ส่งออก</button>
-  <select id="langSel" class="field sm" aria-label="ภาษาของโปรแกรม"><option value="th">ไทย</option><option value="en">English</option><option value="zh">中文</option></select>
-  <button class="btn sm themebtn" id="bTheme" type="button" aria-label="สลับโหมดกลางวัน/กลางคืน"><svg id="icoTheme" viewBox="0 0 20 20" aria-hidden="true"></svg><span id="txtTheme">โหมดกลางคืน</span></button>
+  <button class="btn ai" id="bAI" type="button" title="AI ช่วยแปล / ตรวจ (Ctrl+Shift+A)"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 1 L11.6 7.4 L18 9 L11.6 10.6 L10 17 L8.4 10.6 L2 9 L8.4 7.4 Z" fill="currentColor"/></svg>AI</button>
+  <button class="btn" id="bQA" type="button" title="ตรวจงานทุกตอน (Ctrl+Shift+Q)">ตรวจงาน</button>
+  <button class="btn primary" id="bExport" type="button" title="ส่งออก (Ctrl+E)">ส่งออก</button>
+  <div class="menuwrap">
+    <button class="iconbtn" id="bMenu" type="button" aria-haspopup="menu" aria-expanded="false" aria-label="ตั้งค่า"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+    <div class="menu right" id="mnMain" role="menu" hidden>
+      <button type="button" role="menuitem" id="bConn">เชื่อมต่อ AI</button>
+      <button type="button" role="menuitem" id="bClients">ลูกค้า · ไฟล์ guide</button>
+      <button type="button" role="menuitem" id="bCfg">เกณฑ์ตรวจทั้งหมด</button>
+      <button type="button" role="menuitem" id="bKeys">คีย์ลัด<kbd>F1</kbd></button>
+      <hr>
+      <label class="menu-row" for="langSel">ภาษาโปรแกรม <select id="langSel" class="field sm"><option value="th">ไทย</option><option value="en">English</option><option value="zh">中文</option></select></label>
+      <button type="button" role="menuitem" class="themebtn" id="bTheme" aria-label="สลับโหมดกลางวัน/กลางคืน"><svg id="icoTheme" viewBox="0 0 20 20" aria-hidden="true"></svg><span id="txtTheme">โหมดกลางคืน</span></button>
+    </div>
   </div>
   <input type="file" id="fFiles" multiple hidden accept=".srt,.ass,.ssa,.zip,.rar,.7z,.xlsx,.csv,.tsv,.mp4,.m4v,.mov,.webm,.mkv,.ts,video/*">
   <input type="file" id="fDir" webkitdirectory multiple hidden>
   <input type="file" id="fGloss" hidden accept=".xlsx,.csv,.tsv,.txt">
 </header>
 
+<div class="critbar" id="critbar">
+  <label class="cb" for="clientSel"><span>ลูกค้า</span><select id="clientSel" class="field sm" aria-label="ลูกค้า"></select></label>
+  <label class="cb" for="preset"><span>เกณฑ์</span><select id="preset" class="field sm" aria-label="ชุดเกณฑ์"></select></label>
+  <div class="seg sm" id="modeSeg" role="group" aria-label="วิธีนับตัวอักษร">
+    <button type="button" data-m="se" title="ไม่นับสระบน-ล่างและวรรณยุกต์">SE</button>
+    <button type="button" data-m="len" title="นับทุกตัว รวมสระ วรรณยุกต์ และช่องว่าง">len</button>
+  </div>
+  <label class="cb" for="limit"><span>ลิมิต</span><input id="limit" class="field num sm" type="number" min="1" max="200"></label>
+  <label class="cb thonly" for="era" id="eraWrap"><span>ยุค</span><select id="era" class="field sm"><option value="off">ไม่ตรวจ</option><option value="modern">ปัจจุบัน</option><option value="period">ย้อนยุค</option></select></label>
+  <span class="chipinfo" id="orient" hidden></span>
+</div>
+
 <main class="main" id="main">
-  <section class="left win" aria-label="วิดีโอ">
-    <div class="tbar"><span class="ttl">PLAYER.EXE</span><span class="tsub">วิดีโอ · เส้นเสียง</span><span class="tdots" aria-hidden="true"><i></i><i></i><i></i></span></div>
-    <div class="scroll">
+  <section class="left pane" aria-label="วิดีโอ">
     <div class="stage" id="stage">
       <video id="video" playsinline preload="metadata"></video>
       <div class="ov" id="ov"><div class="cap" id="cap" hidden></div></div>
@@ -56,86 +67,97 @@
       <div class="wv-ctl"><span id="wvInfo" class="info">เส้นเสียงจะขึ้นเมื่อเปิดวิดีโอ</span><button class="btn sm" id="wvOut" type="button" title="ซูมออก (Ctrl+ล้อเมาส์)">−</button><button class="btn sm" id="wvIn" type="button" title="ซูมเข้า">+</button></div>
     </div>
     <div class="transport">
-      <button class="btn sm" id="bPrevEp" type="button" title="ตอนก่อนหน้า">◀◀ ตอน</button>
-      <button class="btn sm" id="bBack" type="button" title="ถอย 1 วิ (Alt+←)">−1 วิ</button>
+      <button class="btn sm ghost" id="bPrevEp" type="button" title="ตอนก่อนหน้า (Alt+PageUp)">◀◀</button>
+      <button class="btn sm ghost" id="bBack" type="button" title="ถอย 1 วิ (Alt+←)">−1 วิ</button>
       <button class="btn play" id="bPlay" type="button" title="เล่น/หยุด (Ctrl+Space)">เล่น</button>
-      <button class="btn sm" id="bFwd" type="button" title="เดิน 1 วิ (Alt+→)">+1 วิ</button>
-      <button class="btn sm" id="bNextEp" type="button" title="ตอนถัดไป">ตอน ▶▶</button>
+      <button class="btn sm ghost" id="bFwd" type="button" title="เดิน 1 วิ (Alt+→)">+1 วิ</button>
+      <button class="btn sm ghost" id="bNextEp" type="button" title="ตอนถัดไป (Alt+PageDown)">▶▶</button>
       <select class="field sm" id="rate" title="ความเร็ว" aria-label="ความเร็ว">
         <option value="0.5">0.5×</option><option value="0.75">0.75×</option><option value="1">1×</option>
-        <option value="1.25">1.25×</option><option value="1.5">1.5×</option><option value="2">2×</option>
+        <option value="1.25">1.25×</option><option value="1.5">1.5×</option><option value="2">2×</option><option value="2.5">2.5×</option><option value="3">3×</option><option value="4">4×</option>
       </select>
       <span class="clock" id="clock">--</span>
+      <div class="menuwrap">
+        <button class="iconbtn sm" id="bPlayOpt" type="button" aria-haspopup="true" aria-expanded="false" title="ตั้งค่าการเล่น"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="2.6" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M10 2.5v2.2M10 15.3v2.2M2.5 10h2.2M15.3 10h2.2M4.7 4.7l1.6 1.6M13.7 13.7l1.6 1.6M4.7 15.3l1.6-1.6M13.7 6.3l1.6-1.6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
+        <div class="menu right up opts" id="mnPlay" hidden>
+          <label class="chk"><input type="checkbox" id="oClickPlay"> คลิกคิว = เล่นเฉพาะคิวนั้น</label>
+          <label class="chk"><input type="checkbox" id="oNext"> จบตอนแล้วเล่นตอนถัดไปเอง</label>
+          <label class="chk"><input type="checkbox" id="oFollow"> รายการเลื่อนตามวิดีโอ</label>
+          <label class="chk"><input type="checkbox" id="oOv"> โชว์คำแปลบนวิดีโอ</label>
+          <label class="chk"><input type="checkbox" id="oOvColor"> ใส่สีเพศบนวิดีโอ</label>
+          <label class="rng" for="oPos">ความสูงซับ <input type="range" id="oPos" min="0" max="70" step="1"></label>
+        </div>
+      </div>
     </div>
-    <div class="opts">
-      <label class="chk"><input type="checkbox" id="oClickPlay"> คลิกคิว = เล่นเฉพาะคิวนั้น</label>
-      <label class="chk"><input type="checkbox" id="oNext"> จบตอนแล้วเล่นตอนถัดไปเอง</label>
-      <label class="chk"><input type="checkbox" id="oFollow"> รายการเลื่อนตามวิดีโอ</label>
-      <label class="chk"><input type="checkbox" id="oOv"> โชว์ซับไทยบนวิดีโอ</label>
-      <label class="chk"><input type="checkbox" id="oOvColor"> ใส่สีเพศบนวิดีโอ</label>
-      <label class="rng" for="oPos">ความสูงซับ <input type="range" id="oPos" min="0" max="70" step="1"></label>
-    </div>
-    <div class="legend" aria-label="ความหมายของสี">
-      <span><span class="gm">ครับ</span> <span class="gm gr">ผม</span> ชาย</span>
-      <span><span class="gf">ค่ะ</span> <span class="gf gr">ดิฉัน</span> หญิง</span>
-      <span><span class="pt">นะ สิ ล่ะ</span> หางเสียงกลาง</span>
-      <span><span class="ovf">เกินลิมิต</span></span>
-      <span><span class="bad">ต้องแก้</span></span>
-      <span><span class="era">ไม่เข้ายุค</span></span>
-      <span><span class="gl">术语</span></span>
-      <span><span class="g gm">ช</span> <span class="g gf">ญ</span> เพศจากคำ · ชิป "เสียงไม่ตรงหางเสียง" = เดาจากระดับเสียง</span>
-    </div>
-    <div class="keys"><kbd>Ctrl</kbd>+<kbd>Space</kbd> เล่น/หยุด · <kbd>Ctrl</kbd>+<kbd>Enter</kbd> เล่นเฉพาะคิวนี้ · <kbd>Alt</kbd>+<kbd>↑</kbd><kbd>↓</kbd> คิวก่อน/ถัดไป · <kbd>Alt</kbd>+<kbd>←</kbd><kbd>→</kbd> ถอย/เดิน 1 วิ · <kbd>Ctrl</kbd>+<kbd>F</kbd> ค้นหา · <kbd>Ctrl</kbd>+<kbd>Z</kbd> (นอกช่องพิมพ์) เลิกทำ · Shift/Ctrl+คลิก = เลือกหลายคิว · ดับเบิลคลิกคิว = เล่นต่อจากตรงนั้น · ลากขอบคิวบนเส้นเสียงเพื่อแก้เวลา (ต้องปลดล็อกเวลา)</div>
-    </div>
+    <details class="legend" id="legend">
+      <summary>ความหมายของสี</summary>
+      <div class="legend-in">
+        <span class="thonly"><span class="gm">ครับ</span> <span class="gm gr">ผม</span> ชาย</span>
+        <span class="thonly"><span class="gf">ค่ะ</span> <span class="gf gr">ดิฉัน</span> หญิง</span>
+        <span class="thonly"><span class="pt">นะ สิ ล่ะ</span> หางเสียงกลาง</span>
+        <span><span class="ovf">เกินลิมิต</span></span>
+        <span><span class="bad">ต้องแก้</span></span>
+        <span class="thonly"><span class="era">ไม่เข้ายุค</span></span>
+        <span><span class="gl">术语</span></span>
+      </div>
+    </details>
   </section>
 
   <div class="split" id="split" role="separator" aria-orientation="vertical" title="ลากเพื่อปรับขนาด"></div>
 
-  <section class="right win" aria-label="ซับทุกตอน">
-    <div class="tbar"><span class="ttl">SUBTITLES.SRT</span><span class="tsub">原文 | 译文 ทุกตอน</span><span class="tdots" aria-hidden="true"><i></i><i></i><i></i></span></div>
+  <section class="right pane" aria-label="ซับทุกตอน">
     <div class="tools">
-      <input id="q" class="field grow" type="search" placeholder="ค้นหา 原文 / 译文 ทุกตอน" aria-label="ค้นหา">
+      <div class="search">
+        <svg class="sico" viewBox="0 0 20 20" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m13 13 4.5 4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <input id="q" class="field" type="search" placeholder="ค้นหาทุกตอน (Ctrl+F)" aria-label="ค้นหา">
+        <button class="tg mono" id="tCase" type="button" aria-pressed="false" title="ตัวพิมพ์ใหญ่-เล็กต้องตรงกัน">Aa</button>
+        <button class="tg mono" id="tRe" type="button" aria-pressed="false" title="ใช้ regex">.*</button>
+        <button class="tg" id="tOnly" type="button" aria-pressed="true" title="แสดงเฉพาะคิวที่เจอ">กรอง</button>
+        <button class="tg" id="bPrevM" type="button" title="ที่เจอก่อนหน้า (Shift+Enter)">▲</button>
+        <button class="tg" id="bNextM" type="button" title="ที่เจอถัดไป (Enter)">▼</button>
+        <button class="tg" id="tRep" type="button" aria-pressed="false" title="ค้นหาและแทนที่">แทนที่</button>
+      </div>
+      <label class="jump" for="epJump">ไปที่ <select id="epJump" class="field sm"></select></label>
+    </div>
+    <div class="tools rep" id="repRow" hidden>
       <input id="r" class="field grow" type="text" placeholder="แทนที่ด้วย" aria-label="แทนที่ด้วย">
-      <button class="tg mono" id="tCase" type="button" aria-pressed="false" title="ตัวพิมพ์ใหญ่-เล็กต้องตรงกัน">Aa</button>
-      <button class="tg mono" id="tRe" type="button" aria-pressed="false" title="ใช้ regex">.*</button>
-      <button class="tg" id="tOnly" type="button" aria-pressed="true" title="แสดงเฉพาะคิวที่เจอ">กรอง</button>
-      <button class="btn sm" id="bPrevM" type="button" title="ที่เจอก่อนหน้า (Shift+Enter)">▲</button>
-      <button class="btn sm" id="bNextM" type="button" title="ที่เจอถัดไป (Enter)">▼</button>
+      <select id="scope" class="field sm" aria-label="ขอบเขตการแทนที่"><option value="all">ทุกตอน</option><option value="cur">เฉพาะตอนนี้</option></select>
       <button class="btn sm" id="bRep1" type="button">แทนที่</button>
       <button class="btn sm" id="bRepAll" type="button">แทนที่ทั้งหมด</button>
-      <select id="scope" class="field sm" aria-label="ขอบเขตการแทนที่"><option value="all">ทุกตอน</option><option value="cur">เฉพาะตอนนี้</option></select>
     </div>
-    <div class="tools">
-      <div class="seg" id="filt" role="group" aria-label="ตัวกรอง">
+    <div class="tools filters">
+      <div class="seg sm" id="filt" role="group" aria-label="ตัวกรอง">
         <button type="button" data-f="all" aria-pressed="true">ทั้งหมด</button>
         <button type="button" data-f="issues" aria-pressed="false">มีปัญหา</button>
         <button type="button" data-f="over" aria-pressed="false">เกินลิมิต</button>
         <button type="button" data-f="edited" aria-pressed="false">แก้แล้ว</button>
-        <button type="button" data-f="male" aria-pressed="false">คิวผู้ชาย</button>
-        <button type="button" data-f="female" aria-pressed="false">คิวผู้หญิง</button>
+        <button type="button" data-f="male" aria-pressed="false" class="thonly">ผู้ชาย</button>
+        <button type="button" data-f="female" aria-pressed="false" class="thonly">ผู้หญิง</button>
       </div>
       <span id="codeFilt"></span>
       <span class="info" id="findInfo"></span>
       <button class="tg" id="tSrc" type="button" aria-pressed="true" title="โชว์คอลัมน์原文">原文 | 译文</button>
-      <label class="jump" for="epJump">ไปที่ <select id="epJump" class="field sm"></select></label>
+      <div class="stats" id="stats"></div>
     </div>
     <div class="bar" id="draftBar" hidden></div>
     <div class="list" id="list"></div>
     <div class="editor" id="editor">
-      <div class="ed-head"><span id="edWhere">—</span><span id="edPills"></span></div>
+      <div class="ed-head"><span id="edWhere">—</span><span id="edPills"></span><span class="spacer"></span><button class="btn sm ghost" id="bRevert" type="button">คืนค่าเดิม</button><button class="btn sm ghost" id="bUndo" type="button" disabled>เลิกทำ</button></div>
       <div class="ed-src" id="edSrc" hidden></div>
       <div class="ed-time">
         <label>เริ่ม <input id="inS" class="field" disabled aria-label="เวลาเริ่ม"></label>
         <label>จบ <input id="inE" class="field" disabled aria-label="เวลาจบ"></label>
         <span class="dur" id="dur"></span>
-        <button class="btn sm" id="bSetS" type="button" disabled>เริ่ม = จุดที่เล่น</button>
-        <button class="btn sm" id="bSetE" type="button" disabled>จบ = จุดที่เล่น</button>
         <button class="tg" id="tLock" type="button" aria-pressed="true">ล็อกเวลาอยู่</button>
-        <span class="vsep" aria-hidden="true"></span>
-        <button class="btn sm" id="bSplit" type="button" title="แยกตรงเคอร์เซอร์ (หรือตรงจุดที่วิดีโอเล่นอยู่)">แยกคิว</button>
-        <button class="btn sm" id="bMerge" type="button">รวมกับคิวถัดไป</button>
-        <button class="btn sm" id="bIns" type="button">แทรกคิวหลังนี้</button>
-        <button class="btn sm" id="bDel" type="button">ลบคิว</button>
+        <span class="unlocked">
+          <button class="btn sm" id="bSetS" type="button" disabled>เริ่ม = จุดที่เล่น</button>
+          <button class="btn sm" id="bSetE" type="button" disabled>จบ = จุดที่เล่น</button>
+          <span class="vsep" aria-hidden="true"></span>
+          <button class="btn sm" id="bSplit" type="button" title="แยกตรงเคอร์เซอร์ (หรือตรงจุดที่วิดีโอเล่นอยู่)">แยกคิว</button>
+          <button class="btn sm" id="bMerge" type="button">รวมกับคิวถัดไป</button>
+          <button class="btn sm" id="bIns" type="button">แทรกคิวหลังนี้</button>
+          <button class="btn sm" id="bDel" type="button">ลบคิว</button>
+        </span>
       </div>
       <div class="ed-body">
         <div class="hlwrap"><div class="hlback" id="taBack" aria-hidden="true"></div><textarea id="ta" rows="2" spellcheck="false" placeholder="เลือกคิวจากรายการด้านบน" aria-label="ข้อความซับ"></textarea></div>
@@ -143,38 +165,140 @@
       </div>
       <div class="ed-iss" id="edIss"></div>
       <div class="ed-act">
-        <button class="btn sm" id="bPrevL" type="button">◀ คิวก่อน</button>
-        <button class="btn sm" id="bNextL" type="button">คิวถัดไป ▶</button>
-        <button class="btn sm" id="bPlayL" type="button">เล่นเฉพาะคิวนี้</button>
-        <button class="btn sm" id="bBreak" type="button" title="หาจุดตัดบรรทัดที่ไม่ฉีกคำ ไม่ขึ้นบรรทัดด้วยคำลงท้าย">ตัดบรรทัดอัตโนมัติ</button>
-        <button class="btn sm" id="bJoin" type="button">รวมเป็นบรรทัดเดียว</button>
-        <button class="btn sm" id="bToM" type="button" title="ครับ ผม ขอรับ พ่ะย่ะค่ะ กระหม่อม">เปลี่ยนเป็นผู้ชาย</button>
-        <button class="btn sm" id="bToF" type="button" title="ค่ะ/คะ ฉัน เจ้าค่ะ/เจ้าคะ เพคะ หม่อมฉัน">เปลี่ยนเป็นผู้หญิง</button>
-        <button class="btn sm" id="bDropP" type="button" title="ตัด ครับ ค่ะ คะ นะคะ→นะ ฯลฯ">ตัดหางเสียง</button>
-        <button class="btn sm ghost" id="bRevert" type="button">คืนค่าเดิมคิวนี้</button>
-        <button class="btn sm ghost" id="bUndo" type="button" disabled>เลิกทำ</button>
+        <div class="grp">
+          <button class="btn sm" id="bPrevL" type="button" title="Alt+↑">◀ คิวก่อน</button>
+          <button class="btn sm" id="bNextL" type="button" title="Alt+↓">คิวถัดไป ▶</button>
+          <button class="btn sm" id="bPlayL" type="button" title="Ctrl+Enter">เล่นคิวนี้</button>
+        </div>
+        <div class="grp">
+          <button class="btn sm" id="bBreak" type="button" title="หาจุดตัดบรรทัดที่ไม่ฉีกคำ ไม่ขึ้นบรรทัดด้วยคำลงท้าย">ตัดบรรทัด</button>
+          <button class="btn sm" id="bJoin" type="button">รวมบรรทัด</button>
+        </div>
+        <div class="grp thonly">
+          <button class="btn sm" id="bToM" type="button" title="ครับ ผม ขอรับ พ่ะย่ะค่ะ กระหม่อม">→ ชาย</button>
+          <button class="btn sm" id="bToF" type="button" title="ค่ะ/คะ ฉัน เจ้าค่ะ/เจ้าคะ เพคะ หม่อมฉัน">→ หญิง</button>
+          <button class="btn sm" id="bDropP" type="button" title="ตัด ครับ ค่ะ คะ นะคะ→นะ ฯลฯ">ตัดหางเสียง</button>
+        </div>
+        <div class="grp">
+          <button class="btn sm ask" id="bAsk" type="button" title="ถาม AI เรื่องคำแปลของคิวนี้ (Ctrl+J)">ถาม AI</button>
+        </div>
       </div>
     </div>
   </section>
 </main>
 
-<div class="drop" id="drop">วางซับไทย ซับต้นฉบับ วิดีโอ zip หรือ 术语表 ได้หมดเลย</div>
+<aside class="askpanel" id="askPanel" hidden aria-label="ผู้ช่วย AI">
+  <div class="ask-h"><b>ผู้ช่วยแปล</b><span class="spacer"></span><button class="btn sm ghost" id="askClear" type="button">ล้างแชต</button><button class="iconbtn sm" id="askClose" type="button" aria-label="ปิด">✕</button></div>
+  <div class="ask-ctx" id="askCtx"></div>
+  <div class="ask-sel info" id="askSel"></div>
+  <div class="ask-quick" id="askQuick">
+    <button class="btn sm" type="button" data-q="word">คำนี้แปลว่าอะไร</button>
+    <button class="btn sm" type="button" data-q="alt">ขอคำแปลแบบอื่น</button>
+    <button class="btn sm" type="button" data-q="check">ประโยคนี้แปลกไหม</button>
+    <button class="btn sm" type="button" data-q="explain">อธิบาย原文</button>
+  </div>
+  <div class="ask-log" id="askLog"></div>
+  <div class="ask-in"><textarea id="askIn" class="field" rows="2" placeholder="พิมพ์ถามได้เลย เช่น 宝宝 ตรงนี้ควรแปลว่าอะไร (Enter ส่ง · Shift+Enter ขึ้นบรรทัด)"></textarea><button class="btn primary" id="askGo" type="button">ส่ง</button></div>
+  <div class="ask-ai"><select id="askProv" class="field sm" aria-label="AI"></select><select id="askModel" class="field sm" aria-label="รุ่น"></select></div>
+</aside>
+
+<div class="drop" id="drop">วางซับ ซับต้นฉบับ วิดีโอ zip หรือ 术语表 ได้หมดเลย</div>
 <div class="toast" id="toast" role="status" aria-live="polite"><span id="toastMsg"></span><button class="btn sm" id="toastAct" type="button" hidden></button></div>
+
+<div class="modal" id="mProj" role="dialog" aria-modal="true" aria-labelledby="projTitle">
+  <div class="card">
+    <h2 id="projTitle">โปรเจกต์</h2>
+    <p class="sub">แต่ละโปรเจกต์เก็บซับ งานที่แก้ 术语表 เกณฑ์ และลูกค้าแยกกัน ไม่ปนกัน สลับไปมาได้ เก็บไว้ในเครื่องนี้</p>
+    <div class="newproj" id="npBox">
+      <h3>สร้างโปรเจกต์ใหม่</h3>
+      <div class="row2">
+        <label for="npName" class="grow2">ชื่อโปรเจกต์<input id="npName" class="field" type="text" placeholder="เช่น 绾骨灯 EP01-50"></label>
+        <label for="npPair">คู่ภาษา (ต้นฉบับ → คำแปล)<select id="npPair" class="field">
+          <option value="zh>th">จีน → ไทย</option>
+          <option value="th>zh">ไทย → จีน</option>
+          <option value="th>en">ไทย → อังกฤษ</option>
+          <option value="en>th">อังกฤษ → ไทย</option>
+          <option value="en>zh">อังกฤษ → จีน</option>
+          <option value="zh>en">จีน → อังกฤษ</option>
+        </select></label>
+        <label for="npClient">ลูกค้า<select id="npClient" class="field"></select></label>
+      </div>
+      <div class="actions start"><button class="btn primary" id="npGo" type="button">สร้างแล้วเปิดเลย</button><button class="btn ghost" id="npImport" type="button">นำเข้าไฟล์โปรเจกต์ (.hfproj)</button></div>
+      <input type="file" id="fProj" hidden accept=".hfproj,.json">
+    </div>
+    <h3>โปรเจกต์ทั้งหมด</h3>
+    <div class="plist" id="pList"></div>
+    <div class="actions"><button class="btn primary" type="button" data-close>ปิด</button></div>
+  </div>
+</div>
+
+<div class="modal" id="mConn" role="dialog" aria-modal="true" aria-labelledby="connTitle">
+  <div class="card">
+    <h2 id="connTitle">เชื่อมต่อ AI</h2>
+    <p class="sub">เลือก AI ที่จะใช้ แล้วใส่ "กุญแจ" (API key) ที่ได้หลังล็อกอินเว็บของเจ้านั้น ทำครั้งเดียว โปรแกรมจำไว้ในเครื่องนี้เท่านั้น ไม่ส่งไปที่อื่น</p>
+    <div class="prov host" id="hostBox" hidden>
+      <div class="prov-h"><b>Claude ผ่าน claude.ai</b><span class="st ok">พร้อมใช้</span></div>
+      <p class="fine">เปิดหน้านี้ใน claude.ai อยู่ ใช้ Claude จากบัญชีที่ล็อกอินได้เลย ไม่ต้องใส่กุญแจ (อ่านรูปได้ อ่าน PDF แปลงเป็นรูปให้)</p>
+    </div>
+    <div id="provList"></div>
+    <details class="why">
+      <summary>ทำไมล็อกอิน ChatGPT Plus / Claude Pro / Gemini แอปตรง ๆ ไม่ได้</summary>
+      <p class="fine">แพ็กเกจรายเดือนของแอปแชต (ChatGPT Plus, Claude Pro, Gemini Advanced) ใช้ได้เฉพาะในแอปของเจ้านั้น โปรแกรมอื่นต่อเข้าไปใช้ไม่ได้ ทุกเจ้าให้โปรแกรมอื่นใช้ผ่าน "กุญแจ" เท่านั้น วิธีรับกุญแจคือกดปุ่มล็อกอินด้านบน ล็อกอินบัญชีเดิมของเธอ แล้วกดสร้างกุญแจ</p>
+    </details>
+    <div class="actions"><button class="btn primary" type="button" data-close>เสร็จแล้ว</button></div>
+  </div>
+</div>
+
+<div class="modal" id="mGuide" role="dialog" aria-modal="true" aria-labelledby="guideTitle">
+  <div class="card">
+    <h2 id="guideTitle">ลูกค้า · ไฟล์ guide</h2>
+    <div class="row2">
+      <label for="cuPick" class="grow2">ลูกค้า<select id="cuPick" class="field"></select></label>
+      <button class="btn ghost" id="cuDel" type="button">ลบลูกค้านี้</button>
+    </div>
+    <section class="gstep" id="gStep1">
+      <h3>1 · ใส่ไฟล์คู่มือของลูกค้า</h3>
+      <p class="sub">ลากไฟล์ guide มาวางในกรอบ (PDF, Word, Excel, รูป, txt) ใส่ได้หลายไฟล์ หรือวางข้อความที่ PM ส่งมา แล้วให้ AI อ่านและสรุปกฎให้</p>
+      <div class="gdrop" id="gDrop" tabindex="0" role="button">ลากไฟล์ guide มาวางที่นี่ หรือกดเพื่อเลือกไฟล์</div>
+      <input type="file" id="fGuide" multiple hidden accept=".pdf,.docx,.xlsx,.txt,.md,.png,.jpg,.jpeg,.webp">
+      <div class="gfiles" id="gFiles"></div>
+      <label class="col" for="gText">ข้อความเพิ่มเติม (ไม่ใส่ก็ได้)<textarea id="gText" class="field" rows="3" placeholder="เช่น ข้อความจาก PM: 竖屏每行不超过14个字，不加标点…"></textarea></label>
+      <div class="row2">
+        <label for="gProv">ใช้ AI<select id="gProv" class="field sm"></select></label>
+        <label for="gModel">รุ่น<select id="gModel" class="field sm"></select></label>
+        <button class="btn primary" id="gGo" type="button">ให้ AI อ่านคู่มือ</button>
+        <button class="btn ghost" id="gManual" type="button">กรอกเองไม่ใช้ AI</button>
+      </div>
+      <p class="info" id="gProg"></p>
+    </section>
+    <section class="gstep" id="gStep2" hidden>
+      <h3>2 · ตรวจกฎที่ได้ แก้ได้ทุกช่อง</h3>
+      <div class="row2"><label for="cuName" class="grow2">ชื่อลูกค้า / งาน<input id="cuName" class="field" type="text"></label>
+        <label for="cuTgt">ภาษาคำแปล<select id="cuTgt" class="field"><option value="th">ไทย</option><option value="zh">จีน</option><option value="en">อังกฤษ</option></select></label></div>
+      <div class="cfg-grid" id="cuForm"></div>
+      <label class="col" for="cuRules">กฎสำหรับ AI และคนตรวจ (หนึ่งบรรทัดต่อหนึ่งข้อ)<textarea id="cuRules" class="field" rows="8"></textarea></label>
+      <div id="cuGloss"></div>
+      <div id="cuUnclear"></div>
+      <div class="actions"><button class="btn ghost" id="cuBack" type="button">ย้อนกลับ</button><button class="btn" id="cuSave" type="button">บันทึกลูกค้า</button><button class="btn primary" id="cuUse" type="button">บันทึกและใช้กับโปรเจกต์นี้</button></div>
+    </section>
+    <div class="actions"><button class="btn" type="button" data-close>ปิด</button></div>
+  </div>
+</div>
 
 <div class="modal" id="mPair" role="dialog" aria-modal="true" aria-labelledby="pairTitle">
   <div class="card">
     <h2 id="pairTitle">จับคู่ไฟล์</h2>
-    <p class="sub">ระบบจับคู่ซับไทยกับวิดีโอและ原文 จากชื่อไฟล์และเลขตอนให้แล้ว ตอนไหนผิดหรือว่างอยู่ เลือกใหม่ได้เลย</p>
+    <p class="sub">ระบบจับคู่ไฟล์แปลกับวิดีโอและ原文 จากชื่อไฟล์และเลขตอนให้แล้ว ตอนไหนผิดหรือว่างอยู่ เลือกใหม่ได้เลย</p>
     <p class="info" id="pairInfo"></p>
     <div class="tbl" id="pairT"></div>
-    <div class="actions"><button class="btn" type="button" id="bMakeTh">สร้างไฟล์แปลไทยจาก原文ที่ยังไม่มีคู่</button><button class="btn primary" type="button" data-close>เสร็จแล้ว</button></div>
+    <div class="actions"><button class="btn" type="button" id="bMakeTh">สร้างไฟล์แปลเปล่าจาก原文ที่ยังไม่มีคู่</button><button class="btn primary" type="button" data-close>เสร็จแล้ว</button></div>
   </div>
 </div>
 
 <div class="modal" id="mGloss" role="dialog" aria-modal="true" aria-labelledby="glTitle">
   <div class="card narrow">
     <h2 id="glTitle">术语表</h2>
-    <p class="sub">ใส่ไฟล์ .xlsx / .csv หรือก๊อปสองคอลัมน์ (原文 | ไทย) จาก Excel มาวาง ระบบจะเช็กว่าคิวที่ 原文 มีศัพท์นั้น ใช้คำแปลตามตารางไหม (ต้องมี原文คู่กันด้วย) และขีดเส้นใต้สีเขียวให้ทุกจุดที่ใช้ศัพท์</p>
+    <p class="sub">ใส่ไฟล์ .xlsx / .csv หรือก๊อปสองคอลัมน์ (原文 | คำแปล) จาก Excel มาวาง ระบบจะเช็กว่าคิวที่ 原文 มีศัพท์นั้น ใช้คำแปลตามตารางไหม (ต้องมี原文คู่กันด้วย) และขีดเส้นใต้สีเขียวให้ทุกจุดที่ใช้ศัพท์ 术语表 เก็บแยกตามโปรเจกต์</p>
     <div class="ph-btns" style="justify-content:flex-start"><button class="btn" id="gFile" type="button">เลือกไฟล์术语表</button><button class="btn ghost" id="gClear" type="button">ล้าง术语表</button></div>
     <label class="col" for="gPaste">หรือวางจาก Excel<textarea id="gPaste" class="field" rows="5" placeholder="沈总&#9;ประธานเสิ่น"></textarea></label>
     <div><button class="btn sm" id="gUse" type="button">ใช้ข้อความที่วาง</button></div>
@@ -189,19 +313,18 @@
     <h2 id="qaTitle">ผลตรวจงาน</h2>
     <p class="sub" id="qaSum"></p>
     <div class="tbl" id="qaT"></div>
-    <div class="actions"><button class="btn" id="qaVoice" type="button">วิเคราะห์เสียงทุกตอน (เดาเพศ)</button><button class="btn" id="qaCsv" type="button">ส่งออกรายงาน (.csv)</button><button class="btn primary" type="button" data-close>ปิด</button></div>
+    <div class="actions"><button class="btn" id="qaAISpell" type="button">ให้ AI ตรวจคำผิดทุกตอน</button><button class="btn thonly" id="qaVoice" type="button">วิเคราะห์เสียงทุกตอน (เดาเพศ)</button><button class="btn" id="qaCsv" type="button">ส่งออกรายงาน (.csv)</button><button class="btn primary" type="button" data-close>ปิด</button></div>
   </div>
 </div>
 
 <div class="modal" id="mCfg" role="dialog" aria-modal="true" aria-labelledby="cfgTitle">
   <div class="card">
     <h2 id="cfgTitle">เกณฑ์ตรวจ</h2>
-    <p class="sub">เปลี่ยนแล้วมีผลทันทีและจำไว้ในเครื่องนี้ เลือกชุดของลูกค้าก่อน แล้วค่อยปรับเพิ่มได้</p>
+    <p class="sub">เปลี่ยนแล้วมีผลทันที เกณฑ์เก็บแยกตามโปรเจกต์ เลือกชุดของลูกค้าก่อน แล้วค่อยปรับเพิ่มได้</p>
     <div id="cfgBody"></div>
     <div class="actions"><button class="btn ghost" id="cfgReset" type="button">คืนค่าเริ่มต้นทั้งหมด</button><button class="btn primary" type="button" data-close>เสร็จแล้ว</button></div>
   </div>
 </div>
-
 
 <div class="modal" id="mXlsx" role="dialog" aria-modal="true" aria-labelledby="xTitle">
   <div class="card">
@@ -231,8 +354,9 @@
         <option value="fill">แปลจาก原文 เฉพาะคิวที่ยังว่าง</option>
         <option value="retrans">แปลใหม่ทั้งหมดจาก原文</option>
         <option value="qa">ตรวจคำแปล เสนอเฉพาะที่ควรแก้</option>
+        <option value="spell">ตรวจคำผิด สะกดผิด พิมพ์ผิด</option>
         <option value="shorten">เกลาให้อยู่ในลิมิต (คิวที่เกิน)</option>
-        <option value="particles">ตัดหางเสียงให้เหลือเท่าที่จำเป็น</option>
+        <option value="particles" class="thonly">ตัดหางเสียงให้เหลือเท่าที่จำเป็น</option>
       </select></label>
       <label for="aiScope">ขอบเขต<select id="aiScope" class="field sm">
         <option value="sel">คิวที่เลือก</option>
@@ -240,20 +364,18 @@
         <option value="issues">คิวที่มีปัญหาในตอนนี้</option>
         <option value="all">ทุกตอน</option>
       </select></label>
-      <label for="aiTier">โมเดล Claude<select id="aiTier" class="field sm">
-        <option value="quick">เร็ว</option>
-        <option value="default" selected>มาตรฐาน</option>
-        <option value="complex">ละเอียดที่สุด</option>
-      </select></label>
+      <label for="aiProv">AI<select id="aiProv" class="field sm"></select></label>
+      <label for="aiModel">รุ่น<select id="aiModel" class="field sm"></select></label>
     </div>
-    <label class="col" for="aiRules">กฎของงานนี้ (จำไว้ในเครื่องนี้)<textarea id="aiRules" class="field" rows="5"></textarea></label>
-    <div class="actions" style="justify-content:flex-start">
-      <button class="btn primary" type="button" id="aiGo">ให้ Claude ทำ</button>
+    <details class="rules"><summary>กฎของงานนี้ (เก็บแยกตามโปรเจกต์)</summary><textarea id="aiRules" class="field" rows="6"></textarea></details>
+    <div class="actions start">
+      <button class="btn primary" type="button" id="aiGo">ให้ AI ทำ</button>
       <button class="btn" type="button" id="aiStop" hidden>หยุด</button>
-      <button class="btn" type="button" id="aiCopy">คัดลอก prompt (ไปใช้กับ Gemini / ChatGPT)</button>
-      <button class="btn ghost" type="button" id="aiPasteT">วางผลลัพธ์จาก AI อื่น</button>
+      <span class="spacer"></span>
+      <button class="btn ghost sm" type="button" id="aiCopy">คัดลอก prompt ไปใช้เอง</button>
+      <button class="btn ghost sm" type="button" id="aiPasteT">วางผลลัพธ์จาก AI อื่น</button>
     </div>
-    <textarea id="aiPaste" class="field" rows="4" hidden placeholder='วาง JSON ที่ได้จาก AI: [{"i":"1","th":"..."}]'></textarea>
+    <textarea id="aiPaste" class="field" rows="4" hidden placeholder='วาง JSON ที่ได้จาก AI: [{"i":"1","t":"..."}]'></textarea>
     <div id="aiPasteBtns" hidden><button class="btn sm" type="button" id="aiPasteGo">อ่านผลลัพธ์</button></div>
     <textarea id="aiPromptBox" class="field" rows="4" hidden readonly></textarea>
     <p class="info" id="aiProg"></p>
@@ -264,22 +386,36 @@
 
 <div class="modal" id="mExport" role="dialog" aria-modal="true" aria-labelledby="exTitle">
   <div class="card narrow">
-    <h2 id="exTitle">ส่งออกซับ</h2>
-    <p class="sub">ได้เป็น .zip ข้างในเป็นไฟล์ซับแยกตอนตามชื่อเดิม (SRT หรือ ASS ตามต้นฉบับ) ตอนที่ไม่ได้แก้เป็นไฟล์เดิมทุกไบต์ ตอนที่แก้จะเปลี่ยนเฉพาะคิวที่แก้ คิวอื่นทั้งเลขลำดับและไทม์โค้ดคงเดิม</p>
+    <h2 id="exTitle">ส่งออก</h2>
+    <p class="sub">ไฟล์ซับตอนที่ไม่ได้แก้เป็นไฟล์เดิมทุกไบต์ ตอนที่แก้จะเปลี่ยนเฉพาะข้อความที่แก้ ไทม์โค้ดและเลขลำดับคงเดิม</p>
     <fieldset>
-      <legend>ส่งออก</legend>
+      <legend>ตอนที่จะส่งออก</legend>
       <label class="chk"><input type="radio" name="exScope" value="all" checked> ทุกตอน</label>
       <label class="chk"><input type="radio" name="exScope" value="edited"> เฉพาะตอนที่แก้</label>
       <label class="chk"><input type="radio" name="exScope" value="cur"> เฉพาะตอนที่เลือกอยู่</label>
     </fieldset>
-    <fieldset><legend>ไฟล์ที่ได้</legend>
-      <label class="chk"><input type="checkbox" id="exSubs" checked> ซับแยกตอน (SRT / ASS)</label>
-      <label class="chk"><input type="checkbox" id="exXlsx" checked> Excel เดิม ไฮไลต์เหลืองช่องที่แก้ (งานที่มาจาก Excel)</label>
-      <label class="chk"><input type="checkbox" id="exXSrt"> SRT แยกตอนจาก Excel ด้วย</label>
-      <label class="chk"><input type="checkbox" id="exDz"> 中泰对照表 (.xlsx) ทุกคิว ไฮไลต์บรรทัดที่แก้</label>
+    <fieldset>
+      <legend>รูปแบบไฟล์</legend>
+      <label class="chk"><input type="radio" name="exFmt" value="subs" checked> ซับ (SRT / ASS)</label>
+      <label class="chk"><input type="radio" name="exFmt" value="xlsx"> Excel</label>
+      <label class="chk"><input type="radio" name="exFmt" value="both"> ทั้งสองแบบ</label>
     </fieldset>
-    <label class="chk"><input type="checkbox" id="exSuf" checked> ต่อท้ายชื่อไฟล์ตอนที่แก้ด้วย _修改</label>
-    <label class="col" for="exName">ชื่อไฟล์ zip <input id="exName" class="field" type="text"></label>
+    <fieldset id="exXlOpts">
+      <legend>Excel</legend>
+      <label class="chk"><input type="radio" name="exSheet" value="one" checked> รวมทุกตอนในชีตเดียว</label>
+      <label class="chk"><input type="radio" name="exSheet" value="per"> แยกชีตละตอน</label>
+      <label class="chk"><input type="checkbox" id="exXlIss" checked> ใส่คอลัมน์ปัญหาที่ตรวจเจอ</label>
+    </fieldset>
+    <details class="more"><summary>ตัวเลือกเพิ่มเติม</summary>
+      <div class="col">
+        <label class="chk"><input type="checkbox" id="exSubs" checked> ซับแยกตอน (SRT / ASS)</label>
+        <label class="chk"><input type="checkbox" id="exXlsx" checked> Excel ต้นฉบับของลูกค้า ไฮไลต์เหลืองช่องที่แก้ (งานที่มาจาก Excel)</label>
+        <label class="chk"><input type="checkbox" id="exXSrt"> SRT แยกตอนจาก Excel ด้วย</label>
+        <label class="chk"><input type="checkbox" id="exDz"> 对照表 (.xlsx) ทุกคิว ไฮไลต์บรรทัดที่แก้</label>
+        <label class="chk"><input type="checkbox" id="exSuf" checked> ต่อท้ายชื่อไฟล์ตอนที่แก้ด้วย _修改</label>
+      </div>
+    </details>
+    <label class="col" for="exName">ชื่อไฟล์ <input id="exName" class="field" type="text"></label>
     <p class="info" id="exInfo"></p>
     <div class="actions"><button class="btn" type="button" data-close>ยกเลิก</button><button class="btn primary" id="exGo" type="button">ส่งออก</button></div>
   </div>
@@ -289,7 +425,7 @@
   <div class="card narrow">
     <h2 id="keysTitle">คีย์ลัด</h2>
     <p class="sub">บนเครื่อง Mac ใช้ ⌘ แทน Ctrl</p>
-    <table class="keys"><tr><td><kbd>Ctrl+S</kbd></td><td>บันทึกงานทันที (บันทึกอัตโนมัติอยู่แล้วทุกครั้งที่แก้)</td></tr><tr><td><kbd>Ctrl+E</kbd></td><td>ส่งออกไฟล์ส่งลูกค้า</td></tr><tr><td><kbd>Ctrl+O</kbd></td><td>เปิดไฟล์ / zip / rar</td></tr><tr><td><kbd>Ctrl+Shift+O</kbd></td><td>เปิดโฟลเดอร์</td></tr><tr><td><kbd>Ctrl+D</kbd></td><td>ทำเครื่องหมายว่าตอนนี้ตรวจเสร็จ / ยกเลิก</td></tr><tr><td><kbd>Ctrl+Shift+Q</kbd></td><td>ตรวจงาน (QA)</td></tr><tr><td><kbd>Ctrl+Shift+A</kbd></td><td>AI ช่วยแปล/ตรวจ</td></tr><tr><td><kbd>Ctrl+G</kbd></td><td>术语表</td></tr><tr><td><kbd>Ctrl+F</kbd></td><td>ค้นหาทุกตอน</td></tr><tr><td><kbd>Enter / Shift+Enter</kbd></td><td>ที่เจอถัดไป / ก่อนหน้า (ในช่องค้นหา)</td></tr><tr><td><kbd>Ctrl+Z</kbd></td><td>เลิกทำ (นอกช่องพิมพ์)</td></tr><tr><td><kbd>Ctrl+Shift+Z / Ctrl+Y</kbd></td><td>ทำซ้ำสิ่งที่เลิกทำ</td></tr><tr><td><kbd>Space</kbd></td><td>เล่น/หยุด (นอกช่องพิมพ์)</td></tr><tr><td><kbd>Ctrl+Space</kbd></td><td>เล่น/หยุด (ใช้ได้ทุกที่)</td></tr><tr><td><kbd>Ctrl+Enter</kbd></td><td>เล่นเฉพาะคิวนี้</td></tr><tr><td><kbd>↑ ↓</kbd></td><td>คิวก่อน/ถัดไป (นอกช่องพิมพ์)</td></tr><tr><td><kbd>Alt+↑ / Alt+↓</kbd></td><td>คิวก่อน/ถัดไป (ใช้ได้ทุกที่)</td></tr><tr><td><kbd>Alt+← / Alt+→</kbd></td><td>ถอย/เดิน 1 วินาที</td></tr><tr><td><kbd>Alt+PageUp / Alt+PageDown</kbd></td><td>ตอนก่อน/ถัดไป</td></tr><tr><td><kbd>Ctrl+ล้อเมาส์</kbd></td><td>ซูมเส้นเสียง</td></tr><tr><td><kbd>F1 หรือ Ctrl+/</kbd></td><td>เปิดหน้านี้</td></tr><tr><td><kbd>Esc</kbd></td><td>ปิดหน้าต่าง</td></tr></table>
+    <table class="keys"><tr><td><kbd>Ctrl+S</kbd></td><td>บันทึกงานทันที (บันทึกอัตโนมัติอยู่แล้วทุกครั้งที่แก้)</td></tr><tr><td><kbd>Ctrl+E</kbd></td><td>ส่งออกไฟล์ส่งลูกค้า</td></tr><tr><td><kbd>Ctrl+O</kbd></td><td>เปิดไฟล์ / zip / rar</td></tr><tr><td><kbd>Ctrl+Shift+O</kbd></td><td>เปิดโฟลเดอร์</td></tr><tr><td><kbd>Ctrl+Shift+P</kbd></td><td>โปรเจกต์ (สร้างใหม่ / สลับ)</td></tr><tr><td><kbd>Ctrl+D</kbd></td><td>ทำเครื่องหมายว่าตอนนี้ตรวจเสร็จ / ยกเลิก</td></tr><tr><td><kbd>Ctrl+Shift+Q</kbd></td><td>ตรวจงาน (QA)</td></tr><tr><td><kbd>Ctrl+Shift+A</kbd></td><td>AI ช่วยแปล/ตรวจ</td></tr><tr><td><kbd>Ctrl+G</kbd></td><td>术语表</td></tr><tr><td><kbd>Ctrl+F</kbd></td><td>ค้นหาทุกตอน</td></tr><tr><td><kbd>Ctrl+H</kbd></td><td>ค้นหาและแทนที่</td></tr><tr><td><kbd>Enter / Shift+Enter</kbd></td><td>ที่เจอถัดไป / ก่อนหน้า (ในช่องค้นหา)</td></tr><tr><td><kbd>Ctrl+Z</kbd></td><td>เลิกทำ (นอกช่องพิมพ์)</td></tr><tr><td><kbd>Ctrl+Shift+Z / Ctrl+Y</kbd></td><td>ทำซ้ำสิ่งที่เลิกทำ</td></tr><tr><td><kbd>Space</kbd></td><td>เล่น/หยุด (นอกช่องพิมพ์)</td></tr><tr><td><kbd>Ctrl+Space</kbd></td><td>เล่น/หยุด (ใช้ได้ทุกที่)</td></tr><tr><td><kbd>Ctrl+Enter</kbd></td><td>เล่นเฉพาะคิวนี้</td></tr><tr><td><kbd>↑ ↓</kbd></td><td>คิวก่อน/ถัดไป (นอกช่องพิมพ์)</td></tr><tr><td><kbd>Alt+↑ / Alt+↓</kbd></td><td>คิวก่อน/ถัดไป (ใช้ได้ทุกที่)</td></tr><tr><td><kbd>Alt+← / Alt+→</kbd></td><td>ถอย/เดิน 1 วินาที</td></tr><tr><td><kbd>Alt+PageUp / Alt+PageDown</kbd></td><td>ตอนก่อน/ถัดไป</td></tr><tr><td><kbd>Ctrl+ล้อเมาส์</kbd></td><td>ซูมเส้นเสียง</td></tr><tr><td><kbd>F1 หรือ Ctrl+/</kbd></td><td>เปิดหน้านี้</td></tr><tr><td><kbd>Esc</kbd></td><td>ปิดหน้าต่าง / เมนู</td></tr></table>
     <div class="actions"><button class="btn primary" type="button" data-close>ปิด</button></div>
   </div>
 </div>

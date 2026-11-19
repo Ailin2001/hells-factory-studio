@@ -8,7 +8,7 @@ export const LANGS = { th: 'ไทย', en: 'English', zh: '中文' };
 const KEY = 'hfsub1:lang';
 const COL = { en: 0, zh: 1 };
 const ATTRS = ['title', 'placeholder', 'aria-label'];
-const SKIP = '#list, #cap, #ov, #ta, #taBack, #edSrc, #qaT, #gPrev, #xPrev, #aiRes, #aiPromptBox, #aiPaste, #aiRules, #pairT, #edIss, script, style, textarea, [data-no-i18n]';
+const SKIP = '#list, #cap, #ov, #ta, #taBack, #edSrc, #qaT, #gPrev, #xPrev, #aiRes, #aiPromptBox, #aiPaste, #aiRules, #pairT, #edIss, #askLog, #askCtx, #askSel, #gFiles, #cuGloss, #cuUnclear, #cuRules, #pjName, script, style, textarea, [data-no-i18n]';
 
 const origText = new WeakMap();
 let lang = 'th';

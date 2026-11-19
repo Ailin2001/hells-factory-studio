@@ -1,7 +1,7 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Main window: open/save dialogs and writing files the user picked",
+  "description": "Main window: open/save dialogs, writing files the user picked, AI provider calls, opening sign-in pages",
   "windows": [
     "main"
   ],
@@ -17,6 +17,29 @@
       "allow": [
         {
           "path": "**"
+        }
+      ]
+    },
+    {
+      "identifier": "http:default",
+      "allow": [
+        {
+          "url": "https://api.anthropic.com/*"
+        },
+        {
+          "url": "https://generativelanguage.googleapis.com/*"
+        },
+        {
+          "url": "https://api.openai.com/*"
+        }
+      ]
+    },
+    "opener:default",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [
+        {
+          "url": "https://*"
         }
       ]
     }

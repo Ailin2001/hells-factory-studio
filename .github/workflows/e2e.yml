@@ -1,10 +1,10 @@
-name: Test the real Windows app
+name: Test the real apps (Windows, Mac, web)
 
 on:
   workflow_dispatch:
 
 jobs:
-  e2e:
+  windows:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -39,29 +39,66 @@ jobs:
           Write-Host "installed app: $($exe.FullName)"
           "APP_EXE=$($exe.FullName)" >> $env:GITHUB_ENV
 
-      - name: Smoke test - start the installed app and look at the screen
-        shell: pwsh
-        run: |
-          $p = Start-Process "$env:APP_EXE" -PassThru -RedirectStandardError app-err.txt -RedirectStandardOutput app-out.txt
-          Start-Sleep 15
-          Write-Host "app still running after 15 s: $(-not $p.HasExited)"
-          if ($p.HasExited) { Write-Host "exit code: $($p.ExitCode)" }
-          Write-Host '--- app stderr ---'; Get-Content app-err.txt -ErrorAction SilentlyContinue
-          Write-Host '--- app stdout ---'; Get-Content app-out.txt -ErrorAction SilentlyContinue
-          Get-Process | Where-Object { $_.ProcessName -match 'hells|msedgewebview2' } | Format-Table ProcessName, Id, MainWindowTitle -AutoSize | Out-String | Write-Host
-          Add-Type -AssemblyName System.Windows.Forms, System.Drawing
-          $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
-          $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
-          $g = [System.Drawing.Graphics]::FromImage($bmp); $g.CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
-          $small = New-Object System.Drawing.Bitmap $bmp, ([int]($b.Width / 2)), ([int]($b.Height / 2))
-          $ms = New-Object IO.MemoryStream; $small.Save($ms, [System.Drawing.Imaging.ImageFormat]::Jpeg)
-          Write-Host "SHOT_BEGIN smoke"; Write-Host ([Convert]::ToBase64String($ms.ToArray())); Write-Host "SHOT_END"
-          Get-WinEvent -LogName Application -MaxEvents 30 -ErrorAction SilentlyContinue | Where-Object { $_.ProviderName -match 'Application Error|Windows Error Reporting|\.NET Runtime' } | Format-List TimeCreated, ProviderName, Message | Out-String | Write-Host
-          if (-not $p.HasExited) { Stop-Process -Id $p.Id -Force }
-          Start-Sleep 3
-          Get-Process msedgewebview2 -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
-          Start-Sleep 2
-
-      - name: Run the end-to-end test
+      - name: Run the end-to-end test on the installed app
         shell: pwsh
         run: node e2e/run.mjs "$env:APP_EXE"
+
+  mac:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './src-tauri -> target'
+          cache-on-failure: true
+
+      - run: npm ci
+
+      - name: Build the Mac app
+        run: npx tauri build --bundles app
+
+      - name: Start the Mac app and look at the screen
+        run: |
+          APP=$(ls -d src-tauri/target/release/bundle/macos/*.app | head -1)
+          echo "app: $APP"
+          cp -R "$APP" /Applications/
+          open "/Applications/$(basename "$APP")"
+          sleep 20
+          if pgrep -f "$(basename "$APP" .app)" > /dev/null; then echo "MAC_APP_RUNNING=yes"; else echo "MAC_APP_RUNNING=no"; fi
+          screencapture -x shot.png || true
+          sips -Z 1400 shot.png --out shot.jpg -s format jpeg > /dev/null 2>&1 || true
+          echo "SHOT_BEGIN mac-app"; base64 -i shot.jpg; echo "SHOT_END"
+          pgrep -f "$(basename "$APP" .app)" > /dev/null || { echo 'the Mac app is not running'; exit 1; }
+
+      - name: Build the web version
+        run: npm run build
+
+      - name: Test with the Safari engine (WebKit, same as the Mac app)
+        run: |
+          npx playwright-core install webkit
+          node e2e/web.mjs webkit
+
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build
+
+      - name: Test the web version in Google Chrome
+        run: PW_EXE=$(which google-chrome) node e2e/web.mjs chromium

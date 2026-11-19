@@ -172,6 +172,8 @@ export const DICT = {
   'ตัด ครับ ค่ะ คะ นะคะ→นะ ฯลฯ': ['Removes ครับ ค่ะ คะ, นะคะ→นะ, etc.', '删除 ครับ ค่ะ คะ，นะคะ→นะ 等'],
   'ภาษาของโปรแกรม': ['Program language', '界面语言'],
   'กู้คืน': ['Restore', '恢复'],
+  'ไม่มีอะไรให้เลิกทำ': ['Nothing to undo', '没有可撤销的操作'],
+  'ไม่มีอะไรให้ทำซ้ำ': ['Nothing to redo', '没有可重做的操作'],
   'ทิ้ง': ['Discard', '丢弃'],
   "คีย์ลัด": ["Shortcuts", "快捷键"],
   "คีย์ลัดทั้งหมด (F1)": ["All shortcuts (F1)", "全部快捷键 (F1)"],
@@ -210,6 +212,8 @@ export const DICT = {
 
 // Strings the app builds with numbers or names inside.
 export const PATTERNS = [
+  [/^เลิกทำ: (.+)$/, 'Undone: $1', '已撤销：$1'],
+  [/^ทำซ้ำ: (.+)$/, 'Redone: $1', '已重做：$1'],
   [/^เจองานที่แก้ค้างไว้ในเครื่องนี้ (\d+) ตอน$/, 'Found unsaved edits from this computer: $1 episodes', '在本机发现未导出的修改：$1 集'],
   [/^✓ บันทึกแล้ว (\d\d:\d\d)$/, "✓ Saved $1", "✓ 已保存 $1"],
   [/^ตรวจเสร็จ (\d+)\/(\d+) ตอน$/, "Done $1/$2 eps", "已审完 $1/$2 集"],

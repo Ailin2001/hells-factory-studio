@@ -504,15 +504,30 @@ $('bDropP').onclick = () => batchText(c => dropParticles(c.t, S.L), 'ตัด�
 
 /* ---------- undo & cue structure ---------- */
 const HIST = [];
+const REDO = [];
+const snap = (eps, label) => ({ label, items: eps.map(ep => ({ ep, cues: ep.cues.map(c => Object.assign({}, c, { _q: undefined })), struct: !!ep.struct })) });
 function pushHist(eps, label) {
-  HIST.push({ label, items: eps.map(ep => ({ ep, cues: ep.cues.map(c => Object.assign({}, c, { _q: undefined })), struct: !!ep.struct })) });
+  HIST.push(snap(eps, label));
   if (HIST.length > 60) HIST.shift();
+  REDO.length = 0;
   $('bUndo').disabled = false;
+}
+function redo() {
+  const h = REDO.pop();
+  if (!h) { toast('ไม่มีอะไรให้ทำซ้ำ'); return; }
+  HIST.push(snap(h.items.map(it => it.ep), h.label));
+  $('bUndo').disabled = false;
+  for (const it of h.items) { it.ep.cues = it.cues; it.ep.struct = it.struct; it.ep.dirty = true; queueDraft(it.ep); }
+  S.playIdx = -1; S.multi.clear();
+  if (S.sel) { const ep = S.eps[S.sel.e]; if (!ep || !ep.cues.length) S.sel = null; else S.sel.c = Math.min(S.sel.c, ep.cues.length - 1); }
+  renderList(); renderStats(); loadEditor(); renderOverlay(true); drawWave();
+  toast('ทำซ้ำ: ' + h.label);
 }
 function undo() {
   const h = HIST.pop();
   $('bUndo').disabled = !HIST.length;
   if (!h) { toast('ไม่มีอะไรให้เลิกทำ'); return; }
+  REDO.push(snap(h.items.map(it => it.ep), h.label));
   for (const it of h.items) { it.ep.cues = it.cues; it.ep.struct = it.struct; it.ep.dirty = true; queueDraft(it.ep); }
   S.playIdx = -1; S.multi.clear();
   if (S.sel) { const ep = S.eps[S.sel.e]; if (!ep || !ep.cues.length) S.sel = null; else S.sel.c = Math.min(S.sel.c, ep.cues.length - 1); }
@@ -1823,7 +1838,7 @@ document.addEventListener('keydown', e => {
   if (mod && e.shiftKey && k === 'a') { e.preventDefault(); $('bAI').click(); return; }
   if (mod && !e.shiftKey && k === 'd') { e.preventDefault(); toggleDone(); return; }
   if (mod && !e.shiftKey && k === 'g') { e.preventDefault(); $('bGloss').click(); return; }
-  if (mod && e.shiftKey && k === 'z' && !typing) { e.preventDefault(); undo(); return; }
+  if (mod && !typing && ((e.shiftKey && k === 'z') || (!e.shiftKey && k === 'y'))) { e.preventDefault(); redo(); return; }
   if (e.altKey && e.key === 'PageDown') { e.preventDefault(); $('bNextEp').click(); return; }
   if (e.altKey && e.key === 'PageUp') { e.preventDefault(); $('bPrevEp').click(); return; }
   if (e.ctrlKey && e.code === 'Space') { e.preventDefault(); togglePlay(); return; }

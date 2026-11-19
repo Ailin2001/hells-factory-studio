@@ -1856,6 +1856,7 @@ document.addEventListener('keydown', e => {
 });
 
 /* ---------- start ---------- */
+window.__hfState = () => S; // read-only peek for automated tests
 setSaveState('none');
 $('bKeys').onclick = () => openM('mKeys');
 setInterval(() => { if (saveMode === 'dirty') saveNow(false); }, 30000);

@@ -19,7 +19,7 @@ const check = (name, pass, detail = '') => {
 
 console.log('app:', app, fs.existsSync(app) ? 'exists' : 'MISSING');
 const proc = spawn(app, [], {
-  env: { ...process.env, WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: '--remote-debugging-port=9222' },
+  env: { ...process.env, HF_E2E_DEBUG_PORT: '9222' },
   stdio: 'ignore'
 });
 
@@ -30,7 +30,7 @@ async function shot(name) {
 }
 
 try {
-  for (let i = 0; i < 40 && !browser; i++) {
+  for (let i = 0; i < 120 && !browser; i++) {
     try { browser = await chromium.connectOverCDP('http://127.0.0.1:9222'); } catch (e) { await sleep(500); }
   }
   if (!browser) throw new Error('could not attach to the app (WebView2 debugging port)');

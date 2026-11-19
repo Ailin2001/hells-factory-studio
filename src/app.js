@@ -2619,6 +2619,7 @@ function xlBook(eps, per, withIss) {
 }
 
 /* ---------- start ---------- */
+if (/Chrome|Chromium|Edg\//.test(navigator.userAgent)) document.body.classList.add('cvrows');
 window.__hfState = () => S; // read-only peek for automated tests
 setSaveState('none');
 $('bKeys').onclick = () => openM('mKeys');

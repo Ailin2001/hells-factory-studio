@@ -434,3 +434,5 @@ details.why p{margin:8px 0 2px}
 .seg button .cnt.bad{color:var(--bad)}
 .seg button .cnt.ed{color:var(--warn)}
 .seg button[aria-pressed="true"] .cnt{color:inherit}
+/* Chromium (Windows app, Chrome, Edge) also skips single rows off screen; WebKit must not (it collapses the blocks) */
+body.cvrows .row{content-visibility:auto;contain-intrinsic-size:auto 60px}

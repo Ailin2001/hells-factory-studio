@@ -254,7 +254,7 @@ function toast(msg, act, ms) {
   const b = $('toastAct');
   if (act) { b.textContent = act.label; b.hidden = false; b.onclick = () => { act.fn(); hideToast(); }; } else b.hidden = true;
   $('toast').classList.add('on');
-  clearTimeout(toastT); toastT = setTimeout(hideToast, ms || (act ? 10000 : 4500));
+  clearTimeout(toastT); toastT = setTimeout(hideToast, ms || Math.max(act ? 10000 : 4500, Math.min(20000, String(msg).length * 90)));
 }
 const hideToast = () => $('toast').classList.remove('on');
 
@@ -1867,13 +1867,19 @@ async function saveFile(name, data, type) {
   if (host) {
     let dl = null;
     try { dl = await window.claude.use('downloads'); } catch (e) {}
-    if (!dl) { toast('หน้านี้บันทึกไฟล์ไม่ได้ ลองเปิดหน้านี้แบบเต็มจอใน claude.ai'); return; }
+    const NOSAVE = 'หน้านี้บันทึกไฟล์ไม่ได้ · ต้องล็อกอิน claude.ai แล้วเปิดลิงก์นี้ในเบราว์เซอร์ (Chrome / Edge / Safari) หรือใช้โปรแกรมบน Windows / Mac แทน · งานที่แก้ยังเซฟอยู่ในเครื่อง ไม่หาย';
+    if (!dl) { toast(NOSAVE); return; }
+    // the web host only lets some file types through; a project file goes out as .json (import takes it as it is)
+    if (/\.hfproj$/i.test(name)) name += '.json';
     try { await dl.save({ filename: name, data: new Blob([data]) }); toast(`บันทึก ${name} แล้ว`); }
     catch (err) {
       const code = err && err.code;
-      if (code === 'declined') toast('ยกเลิกการบันทึกแล้ว');
-      else if (code === 'rate_limited') toast('มีหน้าต่างบันทึกเปิดค้างอยู่ รอสักครู่แล้วกดใหม่');
-      else toast('บันทึกไม่ได้: ' + ((err && err.message) || code || 'ไม่ทราบสาเหตุ'));
+      if (code === 'declined') toast('ยกเลิกการบันทึกแล้ว (ต้องกดยืนยันในหน้าต่างที่ถามว่าจะบันทึกไฟล์ไหม)');
+      else if (code === 'rate_limited') toast('มีหน้าต่างถามบันทึกไฟล์เปิดค้างอยู่ กดยืนยันหรือปิดก่อน แล้วกดส่งออกใหม่');
+      else if (code === 'rejected_extension' || code === 'extension_not_enabled') toast(`เว็บนี้ไม่ให้บันทึกไฟล์ชนิด .${extOf(name)} (${code}) · ลองส่งออกแบบ Excel หรือใช้โปรแกรมบน Windows / Mac`);
+      else if (code === 'too_large') toast('ไฟล์ใหญ่เกินที่เว็บรับได้ ลองส่งออกทีละน้อยตอน หรือใช้โปรแกรมบน Windows / Mac');
+      else if (['unavailable', 'not_granted', 'capability_disabled', 'capability_removed'].includes(code)) toast(NOSAVE + ` (${code})`);
+      else toast('บันทึกไม่ได้: ' + ((err && err.message) || code || 'ไม่ทราบสาเหตุ') + (code ? ` (${code})` : ''));
     }
     return;
   }

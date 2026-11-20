@@ -606,3 +606,38 @@ kbd{border-color:var(--frame)}
 [data-skin="glass"] .split::after{background:var(--line2);opacity:1}
 [data-skin="glass"] kbd{border-color:var(--line2)}
 [data-skin="glass"] .modal{background:rgba(30,32,60,.3);backdrop-filter:none}
+
+/* bar between the cue list and the editor: drag to give the list more room */
+.hsplit{flex:none;height:12px;cursor:row-resize;touch-action:none;display:flex;align-items:center;justify-content:center;background:var(--panel2);border-top:var(--bw) solid var(--frame)}
+.hsplit::after{content:"";width:56px;height:4px;border-radius:4px;background:var(--frame);opacity:.45}
+.hsplit:hover::after,.hsplit.on::after{background:var(--accent);opacity:1}
+.editor{border-top:0!important}
+[data-skin="glass"] .hsplit{background:transparent;border-top:1px solid var(--line)}
+[data-skin="glass"] .hsplit::after{background:var(--line2);opacity:1}
+/* small editor: only the cue label, the source line and the text box */
+.editor.mini{padding-top:6px;padding-bottom:8px;gap:5px}
+.editor.mini .ed-time,.editor.mini .ed-iss,.editor.mini .ed-act{display:none}
+.editor.mini .ed-src{max-height:34px;min-height:0;padding:3px 10px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.editor.mini #ta{height:62px;min-height:44px}
+/* the editor no longer squeezes the list on short screens */
+.editor{max-height:44vh}
+.list{min-height:150px}
+@media (max-height:820px){ .editor{max-height:40vh} }
+/* compact rows: one line of timing, small gaps, so many more cues fit on screen */
+.list.dense .row{padding:2px 14px 2px 10px;gap:8px;grid-template-columns:34px 22px 150px minmax(0,1fr) 40px}
+.list.dense.srcon .row{grid-template-columns:34px 22px 150px minmax(0,.78fr) minmax(0,1fr) 40px}
+.list.dense .tc{line-height:22px;padding-top:0;white-space:nowrap;overflow:hidden}
+.list.dense .tc br{display:none}
+.list.dense .tc .du{display:none}
+.list.dense .tc::first-line{font-size:11px}
+.list.dense .txt,.list.dense .src{font-size:14.5px;line-height:22px}
+.list.dense .n,.list.dense .ct{line-height:22px}
+.list.dense .gcol{padding-top:3px}
+.list.dense .chips{margin:0 0 1px}
+.list.dense .chip{font-size:10.5px;line-height:14px}
+.list.dense .eph{padding:4px 14px}
+body.cvrows .list.dense .row{contain-intrinsic-size:auto 27px}
+.tc .tsep{display:none;font-style:normal}
+.list.dense .tc .tsep{display:inline}
+.list.dense .row{grid-template-columns:34px 22px 192px minmax(0,1fr) 40px}
+.list.dense.srcon .row{grid-template-columns:34px 22px 192px minmax(0,.78fr) minmax(0,1fr) 40px}

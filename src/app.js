@@ -320,7 +320,7 @@ function rowHtml(ei, ci, re) {
   const du = ep.noTime ? 'ไม่มีเวลา' : isFinite(dur) ? `${dur.toFixed(2)}s${q.cps != null ? ' · ' + q.cps.toFixed(0) + 'cps' : ''}` : '';
   const counts = cnt.map(n => n > S.cfg.limit ? `<span class="x">${n}</span>` : n).join('<br>');
   const label = (!ep.struct && c.idx != null && c.idx !== '') ? c.idx : ci + 1;
-  return `<div class="${cls}" id="r-${ei}-${ci}" data-e="${ei}" data-c="${ci}"><span class="n">${esc(label)}</span><span class="gcol">${g}</span><span class="tc">${ep.noTime ? 'แถว ' + esc(c.xr) : esc(c.s) + '<br>' + esc(c.e)}<span class="du${durBad ? ' x' : ''}">${du}</span></span><span class="src">${srcH}</span><div class="tx"><div class="txt">${txt}</div>${chipsHtml(q.iss)}</div><span class="ct">${counts}</span></div>`;
+  return `<div class="${cls}" id="r-${ei}-${ci}" data-e="${ei}" data-c="${ci}"><span class="n">${esc(label)}</span><span class="gcol">${g}</span><span class="tc">${ep.noTime ? 'แถว ' + esc(c.xr) : esc(c.s) + '<br><i class="tsep"> – </i>' + esc(c.e)}<span class="du${durBad ? ' x' : ''}">${du}</span></span><span class="src">${srcH}</span><div class="tx"><div class="txt">${txt}</div>${chipsHtml(q.iss)}</div><span class="ct">${counts}</span></div>`;
 }
 function headHtml(ei) {
   const ep = S.eps[ei];
@@ -2047,6 +2047,7 @@ document.addEventListener('keydown', e => {
   if (mod && e.shiftKey && k === 'q') { e.preventDefault(); $('bQA').click(); return; }
   if (mod && e.shiftKey && k === 'a') { e.preventDefault(); $('bAI').click(); return; }
   if (mod && e.shiftKey && k === 'p') { e.preventDefault(); openProjWin(); return; }
+  if (mod && !e.shiftKey && k === 'm') { e.preventDefault(); window.__toggleEdMini(); return; }
   if (mod && !e.shiftKey && k === 'j') { e.preventDefault(); $('bAsk').click(); return; }
   if (mod && !e.shiftKey && k === 'h') { e.preventDefault(); if ($('repRow').hidden) $('tRep').click(); else $('r').focus(); return; }
   if (mod && !e.shiftKey && k === 'd') { e.preventDefault(); toggleDone(); return; }
@@ -2626,6 +2627,26 @@ function xlBook(eps, per, withIss) {
   return xlsxMulti([{ name: 'ซับทุกตอน', rows: [head].concat(...eps.map(rowsOf)), widths: W }]);
 }
 
+/* ---------- list / editor sizes: drag the bar between them, or shrink the editor with one button ---------- */
+(function editorSize() {
+  const ed = $('editor'), hs = $('hsplit'), pane = ed.parentElement;
+  const setH = h => { if (h) { ed.style.height = h + 'px'; ed.style.maxHeight = 'none'; } else { ed.style.height = ''; ed.style.maxHeight = ''; } };
+  const setMini = on => { ed.classList.toggle('mini', on); $('bEdMini').setAttribute('aria-pressed', String(on)); $('bEdMini').textContent = on ? 'ขยายช่องแก้' : 'ย่อช่องแก้'; if (on) setH(0); else setH(S.view.edH || 0); if (S.sel) scrollRow(S.sel.e, S.sel.c); };
+  let drag = null;
+  hs.addEventListener('pointerdown', e => { if (ed.classList.contains('mini')) { setMini(false); S.view.edMini = false; } drag = { y: e.clientY, h: ed.offsetHeight }; hs.setPointerCapture(e.pointerId); hs.classList.add('on'); e.preventDefault(); });
+  hs.addEventListener('pointermove', e => { if (!drag) return; const max = pane.clientHeight - 150; setH(Math.max(70, Math.min(max, drag.h - (e.clientY - drag.y)))); });
+  const end = () => { if (!drag) return; drag = null; hs.classList.remove('on'); S.view.edH = ed.offsetHeight; saveSettings(); };
+  hs.addEventListener('pointerup', end); hs.addEventListener('pointercancel', end);
+  hs.addEventListener('dblclick', () => { S.view.edH = 0; setH(0); saveSettings(); });
+  $('bEdMini').onclick = () => { S.view.edMini = !ed.classList.contains('mini'); setMini(S.view.edMini); saveSettings(); };
+  window.__toggleEdMini = () => $('bEdMini').click();
+  if (S.view.edMini) setMini(true); else if (S.view.edH) setH(Math.min(S.view.edH, Math.max(120, window.innerHeight - 330)));
+})();
+(function denseRows() {
+  const setDense = on => { list.classList.toggle('dense', !!on); $('tDense').setAttribute('aria-pressed', String(!!on)); };
+  setDense(S.view.dense);
+  $('tDense').onclick = () => { S.view.dense = !S.view.dense; setDense(S.view.dense); saveSettings(); if (S.sel) scrollRow(S.sel.e, S.sel.c, true); };
+})();
 /* ---------- start ---------- */
 if (/Chrome|Chromium|Edg\//.test(navigator.userAgent)) document.body.classList.add('cvrows');
 window.__hfState = () => S; // read-only peek for automated tests

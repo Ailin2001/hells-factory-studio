@@ -364,6 +364,10 @@ export const DICT = {
   "สไตล์หน้าตา": ["Look", "界面风格"],
   "Y2K เรโทร": ["Y2K retro", "Y2K 复古"],
   "กระจกใส มินิมอล": ["Glass minimal", "玻璃简约"],
+  "ย่อช่องแก้": ["Shrink editor", "收起编辑区"],
+  "ขยายช่องแก้": ["Expand editor", "展开编辑区"],
+  "ย่อ / ขยายช่องแก้ (เห็นรายการซับมากขึ้น)": ["Shrink / expand the editor (see more of the list)", "收起 / 展开编辑区（看到更多字幕）"],
+  "แถวแน่น": ["Compact rows", "紧凑行"],
 };
 
 // Strings the app builds with numbers or names inside.
